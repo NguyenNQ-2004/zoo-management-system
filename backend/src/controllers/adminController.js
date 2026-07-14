@@ -46,6 +46,71 @@ const buildUserFilters = ({ role, status, search }) => {
 };
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+const assignableTaskRoles = ['STAFF', 'VET'];
+const validTaskTypes = ['CARE', 'CLEANING', 'MEDICAL_SUPPORT', 'MAINTENANCE'];
+const validTaskPriorities = ['LOW', 'MEDIUM', 'HIGH'];
+const validTaskStatuses = ['TODO', 'IN_PROGRESS', 'DONE'];
+const validTicketTypes = ['ADULT', 'CHILD', 'STUDENT', 'VIP', 'GROUP'];
+const validServiceCategories = ['FOOD', 'GUIDE', 'PHOTO', 'EVENT', 'RENTAL'];
+const validBookingStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED'];
+const validPaymentStatuses = ['UNPAID', 'PAID', 'REFUNDED'];
+
+const isBlank = (value) => typeof value !== 'string' || value.trim() === '';
+const isNonNegativeNumber = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
+const isPositiveNumber = (value) => Number.isFinite(Number(value)) && Number(value) > 0;
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const isValidHttpUrl = (value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch (error) {
+    return false;
+  }
+};
+
+const isFutureDate = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) || date > new Date();
+};
+
+const findAssignableUser = async (id) => {
+  if (!id || !isValidObjectId(id)) return null;
+  return User.findOne({ _id: id, role: { $in: assignableTaskRoles } }).select('-password');
+};
+
+const validateAnimalHealthInput = (health = {}) => {
+  if (health.weightKg !== undefined && health.weightKg !== '' && !isNonNegativeNumber(health.weightKg)) {
+    return 'Animal weight must be a number greater than or equal to 0.';
+  }
+
+  if (health.temperatureC !== undefined && health.temperatureC !== '' && health.temperatureC !== null && !Number.isFinite(Number(health.temperatureC))) {
+    return 'Animal temperature must be a valid number.';
+  }
+
+  if (health.lastCheckDate && isFutureDate(health.lastCheckDate)) {
+    return 'Health check date cannot be in the future.';
+  }
+
+  return '';
+};
+
+const findDuplicateAnimalName = async ({ name, species, area, excludeId = null }) => {
+  const filters = {
+    name: new RegExp(`^${escapeRegExp(name.trim())}$`, 'i'),
+    _id: { $ne: excludeId || undefined },
+    $or: [
+      { species: new RegExp(`^${escapeRegExp(species.trim())}$`, 'i') },
+      { area },
+    ],
+  };
+
+  if (!excludeId) delete filters._id;
+  return Animal.findOne(filters);
+};
 
 const normalizeAreaStatus = (status) => {
   if (['Open', 'Maintenance', 'Closed'].includes(status)) return status;
@@ -88,6 +153,15 @@ const normalizeAnimalDoc = (animal) => {
   animal.healthStatus = normalizeAnimalHealthStatus(animal.healthStatus, animal.status);
   animal.status = normalizeAnimalStatus(animal.status);
   return animal;
+};
+
+const isPastDateTime = (value) => {
+  const selectedDate = new Date(value);
+  if (Number.isNaN(selectedDate.getTime())) return true;
+
+  const currentMinute = new Date();
+  currentMinute.setSeconds(0, 0);
+  return selectedDate < currentMinute;
 };
 
 const sanitizeArea = (area) => ({
@@ -644,7 +718,7 @@ const createAnimal = async (req, res) => {
       health = {},
     } = req.body;
 
-    if (!code || !name || !species || !area) {
+    if (isBlank(code) || isBlank(name) || isBlank(species) || !area) {
       return res.status(400).json({
         success: false,
         message: 'code, name, species and area are required.',
@@ -658,11 +732,64 @@ const createAnimal = async (req, res) => {
       });
     }
 
+    const areaExists = await ZooArea.exists({ _id: area });
+    if (!areaExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selected area does not exist.',
+      });
+    }
+
+    if (!isValidHttpUrl(imageUrl.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image URL must be a valid http or https URL.',
+      });
+    }
+
+    if (dateOfBirth && isFutureDate(dateOfBirth)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date of birth cannot be in the future.',
+      });
+    }
+
+    if (age !== '' && age !== undefined && age !== null && !isNonNegativeNumber(age)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Animal age must be a number greater than or equal to 0.',
+      });
+    }
+
+    const healthError = validateAnimalHealthInput(health);
+    if (healthError) {
+      return res.status(400).json({
+        success: false,
+        message: healthError,
+      });
+    }
+
     const existingAnimal = await Animal.findOne({ code: code.toUpperCase().trim() });
     if (existingAnimal) {
       return res.status(409).json({
         success: false,
         message: 'Animal code already exists.',
+      });
+    }
+
+    const duplicateAnimalName = await findDuplicateAnimalName({ name, species, area });
+    if (duplicateAnimalName) {
+      return res.status(409).json({
+        success: false,
+        message: 'Animal name already exists in the same species or area.',
+      });
+    }
+
+    const caretakerUser = caretaker ? await findAssignableUser(caretaker) : null;
+    if (caretaker && !caretakerUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Caretaker must be an existing STAFF or VET user.',
       });
     }
 
@@ -681,7 +808,7 @@ const createAnimal = async (req, res) => {
       diet: diet.trim(),
       status: normalizeAnimalStatus(status),
       area,
-      caretaker: caretaker && isValidObjectId(caretaker) ? caretaker : null,
+      caretaker: caretakerUser?._id || null,
       notes: notes.trim(),
     });
 
@@ -746,6 +873,85 @@ const updateAnimal = async (req, res) => {
 
     normalizeAnimalDoc(animal);
 
+    if (Object.prototype.hasOwnProperty.call(req.body, 'code') && isBlank(code)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Animal code is required.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'name') && isBlank(name)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Animal name is required.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'species') && isBlank(species)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Animal species is required.',
+      });
+    }
+
+    if (typeof imageUrl === 'string' && !isValidHttpUrl(imageUrl.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image URL must be a valid http or https URL.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'dateOfBirth') && dateOfBirth && isFutureDate(dateOfBirth)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date of birth cannot be in the future.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'age') && age !== '' && age !== null && !isNonNegativeNumber(age)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Animal age must be a number greater than or equal to 0.',
+      });
+    }
+
+    if (area) {
+      if (!isValidObjectId(area)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid area id.',
+        });
+      }
+
+      const areaExists = await ZooArea.exists({ _id: area });
+      if (!areaExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected area does not exist.',
+        });
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'caretaker') && caretaker) {
+      const caretakerUser = await findAssignableUser(caretaker);
+      if (!caretakerUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Caretaker must be an existing STAFF or VET user.',
+        });
+      }
+    }
+
+    if (health) {
+      const healthError = validateAnimalHealthInput(health);
+      if (healthError) {
+        return res.status(400).json({
+          success: false,
+          message: healthError,
+        });
+      }
+    }
+
     if (code && code.toUpperCase().trim() !== animal.code) {
       const existingAnimal = await Animal.findOne({ code: code.toUpperCase().trim() });
       if (existingAnimal) {
@@ -755,6 +961,22 @@ const updateAnimal = async (req, res) => {
         });
       }
       animal.code = code.toUpperCase().trim();
+    }
+
+    const nextName = name ? name.trim() : animal.name;
+    const nextSpecies = species ? species.trim() : animal.species;
+    const nextArea = area || animal.area;
+    const duplicateAnimalName = await findDuplicateAnimalName({
+      name: nextName,
+      species: nextSpecies,
+      area: nextArea,
+      excludeId: animal._id,
+    });
+    if (duplicateAnimalName) {
+      return res.status(409).json({
+        success: false,
+        message: 'Animal name already exists in the same species or area.',
+      });
     }
 
     if (name) animal.name = name.trim();
@@ -769,9 +991,9 @@ const updateAnimal = async (req, res) => {
     if (typeof origin === 'string') animal.origin = origin.trim();
     if (typeof diet === 'string') animal.diet = diet.trim();
     if (status) animal.status = normalizeAnimalStatus(status);
-    if (area && isValidObjectId(area)) animal.area = area;
+    if (area) animal.area = area;
     if (Object.prototype.hasOwnProperty.call(req.body, 'caretaker')) {
-      animal.caretaker = caretaker && isValidObjectId(caretaker) ? caretaker : null;
+      animal.caretaker = caretaker || null;
     }
     if (typeof notes === 'string') animal.notes = notes.trim();
 
@@ -893,10 +1115,32 @@ const createTask = async (req, res) => {
       });
     }
 
+    if (isPastDateTime(dueDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Due date cannot be in the past. Please choose the current time or a future time.',
+      });
+    }
+
     if (!isValidObjectId(assignedTo) || !isValidObjectId(assignedBy)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid assignedTo or assignedBy id.',
+      });
+    }
+
+    if (!validTaskTypes.includes(taskType) || !validTaskPriorities.includes(priority) || !validTaskStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task type, priority or status.',
+      });
+    }
+
+    const assignee = await findAssignableUser(assignedTo);
+    if (!assignee) {
+      return res.status(400).json({
+        success: false,
+        message: 'Task assignee must be an existing STAFF or VET user.',
       });
     }
 
@@ -905,7 +1149,7 @@ const createTask = async (req, res) => {
       description: description.trim(),
       taskType,
       priority,
-      assignedTo,
+      assignedTo: assignee._id,
       assignedBy,
       area: area && isValidObjectId(area) ? area : null,
       animal: animal && isValidObjectId(animal) ? animal : null,
@@ -962,6 +1206,45 @@ const updateTask = async (req, res) => {
       'dueDate',
       'status',
     ];
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'title') && isBlank(req.body.title)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Task title is required.',
+      });
+    }
+
+    if (req.body.taskType && !validTaskTypes.includes(req.body.taskType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task type.',
+      });
+    }
+
+    if (req.body.priority && !validTaskPriorities.includes(req.body.priority)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task priority.',
+      });
+    }
+
+    if (req.body.status && !validTaskStatuses.includes(req.body.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid task status.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'assignedTo')) {
+      const assignee = await findAssignableUser(req.body.assignedTo);
+      if (!assignee) {
+        return res.status(400).json({
+          success: false,
+          message: 'Task assignee must be an existing STAFF or VET user.',
+        });
+      }
+      req.body.assignedTo = assignee._id;
+    }
 
     allowedFields.forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {
@@ -1049,10 +1332,24 @@ const createTicket = async (req, res) => {
   try {
     const { code, name, ticketType, price, description = '', isActive = true } = req.body;
 
-    if (!code || !name || !ticketType || price === undefined) {
+    if (isBlank(code) || isBlank(name) || !ticketType || price === undefined) {
       return res.status(400).json({
         success: false,
         message: 'code, name, ticketType and price are required.',
+      });
+    }
+
+    if (!validTicketTypes.includes(ticketType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ticket type.',
+      });
+    }
+
+    if (!isNonNegativeNumber(price)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket price must be a number greater than or equal to 0.',
       });
     }
 
@@ -1107,6 +1404,34 @@ const updateTicket = async (req, res) => {
     }
 
     const { code, name, ticketType, price, description, isActive } = req.body;
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'code') && isBlank(code)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket code is required.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'name') && isBlank(name)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket name is required.',
+      });
+    }
+
+    if (ticketType && !validTicketTypes.includes(ticketType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid ticket type.',
+      });
+    }
+
+    if (price !== undefined && !isNonNegativeNumber(price)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket price must be a number greater than or equal to 0.',
+      });
+    }
 
     if (code && code.toUpperCase().trim() !== ticket.code) {
       const existingTicket = await Ticket.findOne({ code: code.toUpperCase().trim() });
@@ -1211,10 +1536,32 @@ const createService = async (req, res) => {
       isActive = true,
     } = req.body;
 
-    if (!code || !name) {
+    if (isBlank(code) || isBlank(name)) {
       return res.status(400).json({
         success: false,
         message: 'code and name are required.',
+      });
+    }
+
+    if (!validServiceCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service category.',
+      });
+    }
+
+    if (!isNonNegativeNumber(price)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service price must be a number greater than or equal to 0.',
+      });
+    }
+
+    const serviceDuration = Number(duration ?? durationMinutes ?? 0);
+    if (!isPositiveNumber(serviceDuration)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service duration must be greater than 0 minutes.',
       });
     }
 
@@ -1226,13 +1573,21 @@ const createService = async (req, res) => {
       });
     }
 
+    const existingServiceName = await ZooService.findOne({ name: new RegExp(`^${escapeRegExp(name.trim())}$`, 'i') });
+    if (existingServiceName) {
+      return res.status(409).json({
+        success: false,
+        message: 'Service name already exists.',
+      });
+    }
+
     const service = await ZooService.create({
       code: code.toUpperCase().trim(),
       name: name.trim(),
       category,
       description: description.trim(),
       price: Number(price),
-      duration: Number(duration ?? durationMinutes ?? 0),
+      duration: serviceDuration,
       isActive,
     });
 
@@ -1271,6 +1626,44 @@ const updateService = async (req, res) => {
 
     const { code, name, category, description, price, duration, durationMinutes, isActive } = req.body;
 
+    if (Object.prototype.hasOwnProperty.call(req.body, 'code') && isBlank(code)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service code is required.',
+      });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'name') && isBlank(name)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service name is required.',
+      });
+    }
+
+    if (category && !validServiceCategories.includes(category)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service category.',
+      });
+    }
+
+    if (price !== undefined && !isNonNegativeNumber(price)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service price must be a number greater than or equal to 0.',
+      });
+    }
+
+    if (duration !== undefined || durationMinutes !== undefined) {
+      const serviceDuration = Number(duration ?? durationMinutes ?? 0);
+      if (!isPositiveNumber(serviceDuration)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Service duration must be greater than 0 minutes.',
+        });
+      }
+    }
+
     if (code && code.toUpperCase().trim() !== service.code) {
       const existingService = await ZooService.findOne({ code: code.toUpperCase().trim() });
       if (existingService) {
@@ -1280,6 +1673,19 @@ const updateService = async (req, res) => {
         });
       }
       service.code = code.toUpperCase().trim();
+    }
+
+    if (name && name.trim().toLowerCase() !== service.name.toLowerCase()) {
+      const existingServiceName = await ZooService.findOne({
+        _id: { $ne: service._id },
+        name: new RegExp(`^${escapeRegExp(name.trim())}$`, 'i'),
+      });
+      if (existingServiceName) {
+        return res.status(409).json({
+          success: false,
+          message: 'Service name already exists.',
+        });
+      }
     }
 
     if (name) service.name = name.trim();
@@ -1376,6 +1782,27 @@ const updateBookingStatus = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Booking not found.',
+      });
+    }
+
+    if (status && !validBookingStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking status.',
+      });
+    }
+
+    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment status.',
+      });
+    }
+
+    if (booking.status === 'CANCELLED' && status === 'USED') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cancelled bookings cannot be marked as used directly.',
       });
     }
 

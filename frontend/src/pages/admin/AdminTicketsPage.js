@@ -25,8 +25,10 @@ const emptyServiceForm = {
   isActive: true,
 };
 
-const formatMoney = (value) => `${Number(value || 0).toLocaleString('vi-VN')} VND`;
+const formatMoney = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 const formatDate = (value) => new Date(value).toLocaleDateString('en-GB');
+const isNonNegativeNumber = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
+const isPositiveNumber = (value) => Number.isFinite(Number(value)) && Number(value) > 0;
 
 const AdminTicketsPage = () => {
   const [activeTab, setActiveTab] = useState('tickets');
@@ -160,6 +162,10 @@ const AdminTicketsPage = () => {
     setMessage('');
 
     try {
+      if (!isNonNegativeNumber(ticketForm.price)) {
+        throw new Error('Ticket price must be a number greater than or equal to 0.');
+      }
+
       const payload = {
         ...ticketForm,
         price: Number(ticketForm.price),
@@ -186,6 +192,23 @@ const AdminTicketsPage = () => {
     setMessage('');
 
     try {
+      const duplicateService = services.find((service) => {
+        const isSameService = selectedItem?._id === service._id;
+        return !isSameService && service.name?.trim().toLowerCase() === serviceForm.name.trim().toLowerCase();
+      });
+
+      if (duplicateService) {
+        throw new Error('Service name already exists.');
+      }
+
+      if (!isNonNegativeNumber(serviceForm.price || 0)) {
+        throw new Error('Service price must be a number greater than or equal to 0.');
+      }
+
+      if (!isPositiveNumber(serviceForm.durationMinutes)) {
+        throw new Error('Service duration must be greater than 0 minutes.');
+      }
+
       const payload = {
         ...serviceForm,
         price: Number(serviceForm.price || 0),
@@ -240,6 +263,10 @@ const AdminTicketsPage = () => {
 
   const handleBookingUpdate = async (booking, field, value) => {
     try {
+      if (field === 'status' && booking.status === 'CANCELLED' && value === 'USED') {
+        throw new Error('Cancelled bookings cannot be marked as used directly.');
+      }
+
       setSubmitting(true);
       setError('');
       const response = await adminApi.updateBookingStatus(booking._id, {
@@ -377,7 +404,7 @@ const AdminTicketsPage = () => {
               <label className="admin-field"><span>Code</span><input name="code" value={ticketForm.code} onChange={handleTicketChange} required /></label>
               <label className="admin-field"><span>Name</span><input name="name" value={ticketForm.name} onChange={handleTicketChange} required /></label>
               <label className="admin-field"><span>Type</span><select name="ticketType" value={ticketForm.ticketType} onChange={handleTicketChange}>{ticketTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
-              <label className="admin-field"><span>Price</span><input name="price" type="number" min="0" value={ticketForm.price} onChange={handleTicketChange} required /></label>
+              <label className="admin-field"><span>Price</span><input name="price" type="number" min="0" step="0.01" value={ticketForm.price} onChange={handleTicketChange} required /></label>
               <label className="admin-field admin-field-full"><span>Description</span><textarea name="description" rows="3" value={ticketForm.description} onChange={handleTicketChange} /></label>
               <label className="admin-checkbox"><input name="isActive" type="checkbox" checked={ticketForm.isActive} onChange={handleTicketChange} /> Active</label>
               <div className="admin-inline-actions"><button className="admin-button admin-button-primary" disabled={submitting}>{submitting ? 'Saving...' : 'Save ticket'}</button><button type="button" className="admin-button admin-button-secondary" onClick={closeModal}>Cancel</button></div>
@@ -394,8 +421,8 @@ const AdminTicketsPage = () => {
               <label className="admin-field"><span>Code</span><input name="code" value={serviceForm.code} onChange={handleServiceChange} required /></label>
               <label className="admin-field"><span>Name</span><input name="name" value={serviceForm.name} onChange={handleServiceChange} required /></label>
               <label className="admin-field"><span>Category</span><select name="category" value={serviceForm.category} onChange={handleServiceChange}>{serviceCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-              <label className="admin-field"><span>Price</span><input name="price" type="number" min="0" value={serviceForm.price} onChange={handleServiceChange} /></label>
-              <label className="admin-field"><span>Duration minutes</span><input name="durationMinutes" type="number" min="0" value={serviceForm.durationMinutes} onChange={handleServiceChange} /></label>
+              <label className="admin-field"><span>Price</span><input name="price" type="number" min="0" step="0.01" value={serviceForm.price} onChange={handleServiceChange} /></label>
+              <label className="admin-field"><span>Duration minutes</span><input name="durationMinutes" type="number" min="1" value={serviceForm.durationMinutes} onChange={handleServiceChange} required /></label>
               <label className="admin-field admin-field-full"><span>Description</span><textarea name="description" rows="3" value={serviceForm.description} onChange={handleServiceChange} /></label>
               <label className="admin-checkbox"><input name="isActive" type="checkbox" checked={serviceForm.isActive} onChange={handleServiceChange} /> Active</label>
               <div className="admin-inline-actions"><button className="admin-button admin-button-primary" disabled={submitting}>{submitting ? 'Saving...' : 'Save service'}</button><button type="button" className="admin-button admin-button-secondary" onClick={closeModal}>Cancel</button></div>

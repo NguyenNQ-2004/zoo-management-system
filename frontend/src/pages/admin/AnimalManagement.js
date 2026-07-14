@@ -3,6 +3,19 @@ import { animalApi, areaApi } from '../../services/api';
 import './AnimalManagement.css';
 import './AreaManagement.css';
 
+const isNonNegativeNumber = (value) => value === '' || (Number.isFinite(Number(value)) && Number(value) >= 0);
+
+const isValidHttpUrl = (value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch (error) {
+    return false;
+  }
+};
+
 const AnimalManagement = () => {
   const [animals, setAnimals] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -67,6 +80,30 @@ const AnimalManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const duplicateAnimal = animals.find((animal) => {
+        const isSameAnimal = editingAnimal?._id === animal._id;
+        const sameName = animal.name?.trim().toLowerCase() === formData.name.trim().toLowerCase();
+        const sameSpecies = animal.species?.trim().toLowerCase() === formData.species.trim().toLowerCase();
+        const sameArea = animal.area?._id === formData.area;
+        return !isSameAnimal && sameName && (sameSpecies || sameArea);
+      });
+
+      if (duplicateAnimal) {
+        throw new Error('Animal name already exists in the same species or area.');
+      }
+
+      if (!formData.area) {
+        throw new Error('Area is required.');
+      }
+
+      if (!isNonNegativeNumber(formData.age)) {
+        throw new Error('Animal age must be a number greater than or equal to 0.');
+      }
+
+      if (formData.imageUrl && !isValidHttpUrl(formData.imageUrl.trim())) {
+        throw new Error('Image URL must be a valid http or https URL.');
+      }
+
       const submitData = { ...formData, age: formData.age ? parseInt(formData.age) : null };
       if (editingAnimal) {
         await animalApi.update(editingAnimal._id, submitData);
