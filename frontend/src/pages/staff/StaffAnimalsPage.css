@@ -1,0 +1,258 @@
+.staff-animals-page {
+  min-height: 100vh;
+  padding: 34px 38px 48px;
+  background: #f5f7f6;
+  color: #07110c;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.staff-animals-header {
+  margin-bottom: 24px;
+}
+
+.staff-animals-header span {
+  display: block;
+  margin-bottom: 8px;
+  color: #005c38;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staff-animals-header h1 {
+  margin: 0;
+  color: #07110c;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.staff-animals-header p {
+  margin: 10px 0 0;
+  color: #293b31;
+}
+
+.animal-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.35fr) auto auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.animal-filter-panel label {
+  display: grid;
+  gap: 8px;
+}
+
+.animal-filter-panel label span {
+  color: #23352b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.animal-filter-panel input,
+.animal-filter-panel select {
+  min-height: 40px;
+  border: 1px solid #d6e1db;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fbfcfc;
+}
+
+.animal-filter-panel button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: #005c38;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.animal-filter-panel button.secondary {
+  border: 1px solid #cbd8d0;
+  background: #ffffff;
+  color: #005c38;
+}
+
+.animal-message {
+  margin-bottom: 24px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.animal-message.error {
+  border: 1px solid #ffd4cd;
+  background: #fff7f5;
+  color: #b3261e;
+}
+
+.animal-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.animal-summary-grid article,
+.animal-charge-card {
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.animal-summary-grid article {
+  padding: 18px;
+}
+
+.animal-summary-grid span {
+  color: #22362b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.animal-summary-grid strong {
+  display: block;
+  margin-top: 12px;
+  color: #07110c;
+  font-size: 34px;
+}
+
+.animal-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 22px;
+}
+
+.animal-charge-card {
+  overflow: hidden;
+}
+
+.animal-card-media {
+  position: relative;
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #d8eee2, #f2f5f3);
+}
+
+.animal-card-media span {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #005c38;
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.animal-card-media em {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #9ef3bd;
+  color: #09643b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.animal-card-media.status-observation em {
+  background: #ffe5b4;
+  color: #8a4b00;
+}
+
+.animal-card-media.status-treatment em {
+  background: #ffd9d7;
+  color: #b3261e;
+}
+
+.animal-card-body {
+  padding: 18px;
+}
+
+.animal-card-body h2 {
+  margin: 0;
+  color: #005c38;
+  font-size: 25px;
+}
+
+.animal-card-body p {
+  margin: 6px 0 16px;
+  color: #536159;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.animal-card-body dl {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.animal-card-body div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.animal-card-body dt,
+.animal-card-body dd {
+  margin: 0;
+  font-size: 13px;
+}
+
+.animal-card-body dt {
+  color: #536159;
+}
+
+.animal-card-body dd {
+  color: #005c38;
+  font-weight: 900;
+  text-align: right;
+}
+
+.animal-card-body a {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #005c38;
+  color: #ffffff;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .animal-filter-panel,
+  .animal-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .staff-animals-page {
+    padding: 26px 22px 40px;
+  }
+
+  .animal-filter-panel,
+  .animal-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

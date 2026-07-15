@@ -1,0 +1,157 @@
+.care-history-page {
+  min-height: 100vh;
+  padding: 36px 38px 48px;
+  background: #f5f7f6;
+  color: #07110c;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.care-history-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.care-history-header nav,
+.care-history-header nav a {
+  color: #005c38;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.care-history-header h1 {
+  margin: 12px 0 8px;
+  color: #07110c;
+  font-size: 38px;
+}
+
+.care-history-header p {
+  margin: 0;
+  color: #293b31;
+}
+
+.care-history-header > a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: #005c38;
+  color: #ffffff;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.care-history-message,
+.care-history-panel {
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.care-history-message {
+  margin-bottom: 24px;
+  padding: 14px 16px;
+}
+
+.care-history-message.error {
+  border: 1px solid #ffd4cd;
+  background: #fff7f5;
+  color: #b3261e;
+}
+
+.care-history-panel {
+  padding: 24px;
+}
+
+.care-history-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.care-history-panel-header h2 {
+  margin: 0;
+  color: #07110c;
+  font-size: 25px;
+}
+
+.care-history-panel-header span {
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: #edf3ef;
+  color: #005c38;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.care-history-table {
+  display: grid;
+}
+
+.care-history-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.7fr) minmax(100px, 0.45fr) minmax(130px, 0.65fr) minmax(140px, 0.8fr) minmax(260px, 1.4fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 64px;
+  border-top: 1px solid #e2e8e4;
+  font-size: 14px;
+}
+
+.care-history-head {
+  min-height: 34px;
+  border-top: 0;
+  color: #14251c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.care-history-row em {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #e8ece9;
+  color: #27372f;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.care-history-empty {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e2e8e4;
+  color: #536159;
+}
+
+@media (max-width: 1040px) {
+  .care-history-table {
+    overflow-x: auto;
+  }
+
+  .care-history-row {
+    min-width: 860px;
+  }
+}
+
+@media (max-width: 640px) {
+  .care-history-page {
+    padding: 26px 22px 40px;
+  }
+
+  .care-history-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

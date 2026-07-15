@@ -1,0 +1,449 @@
+.staff-dashboard-page {
+  min-height: 100vh;
+  padding: 34px 38px 48px;
+  background: #f5f7f6;
+  color: #07110c;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.staff-dashboard-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.staff-dashboard-header span,
+.staff-dashboard-panel-header span {
+  display: block;
+  margin-bottom: 8px;
+  color: #005c38;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.staff-dashboard-header h1 {
+  margin: 0;
+  color: #07110c;
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.staff-dashboard-header p {
+  margin: 10px 0 0;
+  color: #293b31;
+  font-size: 15px;
+}
+
+.staff-dashboard-profile {
+  min-width: 220px;
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.staff-dashboard-profile span {
+  margin-bottom: 6px;
+  color: #536159;
+  font-size: 11px;
+}
+
+.staff-dashboard-profile strong {
+  display: block;
+  color: #07110c;
+  font-size: 16px;
+}
+
+.staff-dashboard-message {
+  margin-bottom: 24px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #ffffff;
+  color: #23352b;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.staff-dashboard-message.error {
+  border: 1px solid #ffd4cd;
+  background: #fff7f5;
+  color: #b3261e;
+}
+
+.staff-dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.staff-dashboard-summary-grid article,
+.staff-dashboard-panel {
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.staff-dashboard-summary-grid article {
+  min-height: 112px;
+  padding: 20px;
+}
+
+.staff-dashboard-summary-grid span {
+  display: block;
+  color: #22362b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.staff-dashboard-summary-grid strong {
+  display: block;
+  margin-top: 18px;
+  color: #07110c;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.staff-dashboard-summary-grid p {
+  margin: 10px 0 0;
+  color: #536159;
+  font-size: 13px;
+}
+
+.staff-dashboard-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.staff-dashboard-panel {
+  padding: 24px;
+}
+
+.staff-dashboard-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.staff-dashboard-panel-header.compact {
+  margin-bottom: 16px;
+}
+
+.staff-dashboard-panel-header h2 {
+  margin: 0;
+  color: #07110c;
+  font-size: 25px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.staff-dashboard-panel-header a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0 12px;
+  border: 1px solid #cbd8d0;
+  background: #ffffff;
+  color: #005c38;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.staff-dashboard-panel-header a:hover,
+.dashboard-action-list a:hover {
+  background: #f0f7f3;
+}
+
+.dashboard-task-table {
+  display: grid;
+  overflow-x: auto;
+}
+
+.dashboard-task-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.45fr) minmax(150px, 0.9fr) minmax(130px, 0.75fr) minmax(92px, 0.5fr) minmax(120px, 0.65fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 72px;
+  border-top: 1px solid #e2e8e4;
+  color: #07110c;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+a.dashboard-task-row:hover {
+  background: #fbfcfc;
+}
+
+.dashboard-task-head {
+  min-height: 36px;
+  border-top: 0;
+  color: #14251c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-task-row strong,
+.dashboard-task-row small {
+  display: block;
+}
+
+.dashboard-task-row strong {
+  font-size: 14px;
+}
+
+.dashboard-task-row small {
+  margin-top: 5px;
+  color: #536159;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.dashboard-completed-text {
+  color: #536159;
+  text-decoration: line-through;
+}
+
+.dashboard-pill,
+.dashboard-care-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.priority-high {
+  color: #b3261e;
+  background: #ffd9d7;
+}
+
+.priority-critical {
+  color: #ffffff;
+  background: #b3261e;
+}
+
+.priority-normal {
+  color: #087844;
+  background: #9ef2bf;
+}
+
+.priority-low {
+  color: #536159;
+  background: #dfe5e1;
+}
+
+.status-pending {
+  color: #536159;
+  background: #e6ebe8;
+}
+
+.status-in-progress {
+  color: #8a4b00;
+  background: #ffe5b4;
+}
+
+.status-completed,
+.status-healthy {
+  color: #ffffff;
+  background: #005c38;
+}
+
+.status-observation,
+.status-monitoring {
+  color: #8a4b00;
+  background: #ffe5b4;
+}
+
+.status-treatment,
+.status-critical {
+  color: #b3261e;
+  background: #ffd9d7;
+}
+
+.staff-dashboard-side {
+  display: grid;
+  gap: 24px;
+}
+
+.dashboard-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-action-list a {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #cbd8d0;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #005c38;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.dashboard-action-list a::after {
+  content: ">";
+  color: #536159;
+}
+
+.dashboard-animal-list,
+.dashboard-activity-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-animal-card {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border: 1px solid #dce5e0;
+  border-radius: 10px;
+  color: #07110c;
+  text-decoration: none;
+}
+
+.dashboard-animal-card:hover {
+  background: #fbfcfc;
+}
+
+.dashboard-animal-initial {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #d8eee2;
+  color: #005c38;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.dashboard-animal-card strong,
+.dashboard-activity-item strong {
+  display: block;
+  color: #07110c;
+  font-size: 14px;
+}
+
+.dashboard-animal-card span,
+.dashboard-activity-item span {
+  display: block;
+  margin-top: 4px;
+  color: #536159;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.dashboard-activity-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8e4;
+}
+
+.dashboard-activity-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dashboard-activity-item i {
+  width: 11px;
+  height: 11px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #1b7049;
+}
+
+.dashboard-empty-row,
+.dashboard-empty-box {
+  color: #536159;
+  font-size: 14px;
+}
+
+.dashboard-empty-row {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e2e8e4;
+}
+
+.dashboard-empty-box {
+  border: 1px dashed #cbd8d0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fbfcfc;
+}
+
+@media (max-width: 1180px) {
+  .staff-dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .staff-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .staff-dashboard-page {
+    padding: 22px;
+  }
+
+  .staff-dashboard-header,
+  .staff-dashboard-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .staff-dashboard-profile {
+    min-width: 0;
+  }
+
+  .staff-dashboard-header h1 {
+    font-size: 32px;
+  }
+
+  .staff-dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-task-row {
+    min-width: 760px;
+  }
+
+  .dashboard-animal-card {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .dashboard-care-status {
+    justify-self: start;
+    grid-column: 2;
+  }
+}

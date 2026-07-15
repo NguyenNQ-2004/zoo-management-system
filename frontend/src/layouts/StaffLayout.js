@@ -1,8 +1,46 @@
 import React from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import './StaffLayout.css';
+
+const navItems = [
+  { to: '/staff', label: 'Dashboard', icon: 'grid', end: true },
+  { to: '/staff/tasks', label: 'Operations', icon: 'team' },
+  { to: '/staff/animals', label: 'Animal Care', icon: 'paw' }
+];
+
+const SidebarIcon = ({ type }) => {
+  const icons = {
+    grid: (
+      <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z" />
+    ),
+    paw: (
+      <path d="M7 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm7-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm7 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM9.2 13.2c1.4-2.3 4.2-2.3 5.6 0l1.4 2.4c1.1 1.9-.3 4.2-2.5 3.7l-1.1-.2a3 3 0 0 0-1.2 0l-1.1.2c-2.2.5-3.6-1.8-2.5-3.7l1.4-2.4Z" />
+    ),
+    team: (
+      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm8-1a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5ZM3 20a5 5 0 0 1 10 0H3Zm10.5-1.5a6.5 6.5 0 0 0-2.1-4.1A4.5 4.5 0 0 1 20.5 19h-7Z" />
+    ),
+    logout: (
+      <path d="M5 4h8v2H7v12h6v2H5V4Zm10.6 4.4L17 7l5 5-5 5-1.4-1.4 2.6-2.6H11v-2h7.2l-2.6-2.6Z" />
+    )
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      {icons[type]}
+    </svg>
+  );
+};
 
 const StaffLayout = () => {
   const navigate = useNavigate();
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch (error) {
+      return null;
+    }
+  })();
+  const staffName = currentUser?.fullName || currentUser?.name || currentUser?.email || 'Staff';
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -10,23 +48,44 @@ const StaffLayout = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex' }}>
-      <aside style={{ width: '250px', backgroundColor: '#1B5E3C', color: 'white', padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Staff Portal</h2>
-        <Link to="/staff" style={{ color: 'white', textDecoration: 'none' }}>Dashboard</Link>
-        <Link to="/staff/tasks" style={{ color: 'white', textDecoration: 'none' }}>My Tasks</Link>
-        <Link to="/staff/animals" style={{ color: 'white', textDecoration: 'none' }}>My Animals</Link>
-        <Link to="/staff/care-logs" style={{ color: 'white', textDecoration: 'none' }}>Care Logs</Link>
-        <div style={{ marginTop: 'auto' }}>
-          <button 
-            onClick={handleLogout} 
-            style={{ width: '100%', background: 'transparent', color: 'white', border: '1px solid white', padding: '8px', cursor: 'pointer', borderRadius: '4px' }}
-          >
-            Logout
+    <div className="staff-shell">
+      <aside className="staff-sidebar">
+        <div className="staff-brand">
+          <strong>ZooLogix MS</strong>
+          <span>Management Console</span>
+        </div>
+
+        <nav className="staff-nav" aria-label="Staff navigation">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => `staff-nav-link${isActive ? ' active' : ''}`}
+            >
+              <SidebarIcon type={item.icon} />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <nav className="staff-nav staff-sidebar-footer" aria-label="Staff utility navigation">
+          <button type="button" className="staff-nav-link staff-logout" onClick={handleLogout}>
+            <SidebarIcon type="logout" />
+            <span>Logout</span>
           </button>
+        </nav>
+
+        <div className="staff-user-card" aria-label="Current staff user">
+          <div className="staff-user-avatar" />
+          <div>
+            <strong>{staffName}</strong>
+            <span>ZooLogix Staff</span>
+          </div>
         </div>
       </aside>
-      <main style={{ flex: 1, padding: '20px', backgroundColor: '#fff' }}>
+
+      <main className="staff-main">
         <Outlet />
       </main>
     </div>

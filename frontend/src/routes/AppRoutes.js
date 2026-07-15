@@ -11,7 +11,13 @@ import AdminLayout from '../layouts/AdminLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
+import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
+import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
 import StaffDashboard from '../pages/staff/StaffDashboard';
+import StaffCareDetail from '../pages/staff/StaffCareDetail';
+import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
+import StaffTaskDetailPage from '../pages/staff/StaffTaskDetailPage';
+import StaffTasksPage from '../pages/staff/StaffTasksPage';
 import VetDashboard from '../pages/veterinary/VetDashboard';
 import AnimalHealthList from '../pages/veterinary/AnimalHealthList';
 import HealthRecordsArchive from '../pages/veterinary/HealthRecordsArchive';
@@ -24,6 +30,18 @@ import TreatmentPlanForm from '../pages/veterinary/TreatmentPlanForm';
 import TreatmentDetail from '../pages/veterinary/TreatmentDetail';
 import MedicalHistory from '../pages/veterinary/MedicalHistory';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import AreaManagement from '../pages/admin/AreaManagement';
+import AnimalManagement from '../pages/admin/AnimalManagement';
+import ServiceManagement from '../pages/admin/ServiceManagement';
+
+// Develop Pages
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminStaffPage from '../pages/admin/AdminStaffPage';
+import AdminAssignmentsPage from '../pages/admin/AdminAssignmentsPage';
+import AdminAnimalsPage from '../pages/admin/AdminAnimalsPage';
+import AdminTicketsPage from '../pages/admin/AdminTicketsPage';
+import AdminReportsPage from '../pages/admin/AdminReportsPage';
+
 import PlaceholderPage from '../components/PlaceholderPage';
 
 // Route Guards
@@ -46,6 +64,12 @@ const AppRoutes = () => {
         {/* Staff Routes */}
         <Route path="/staff" element={<RoleRoute allowedRole="STAFF"><StaffLayout /></RoleRoute>}>
           <Route index element={<StaffDashboard />} />
+          <Route path="animals" element={<StaffAnimalsPage />} />
+          <Route path="animals/:animalId/care" element={<StaffCareDetail />} />
+          <Route path="animals/:animalId/care-logs" element={<StaffCareHistoryPage />} />
+          <Route path="animals/:animalId/care-logs/new" element={<StaffCareLogFormPage />} />
+          <Route path="tasks" element={<StaffTasksPage />} />
+          <Route path="tasks/:taskId" element={<StaffTaskDetailPage />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Staff" functions={[]} />} />
         </Route>
 
@@ -73,6 +97,15 @@ const AppRoutes = () => {
         {/* Admin Routes */}
         <Route path="/admin" element={<RoleRoute allowedRole="ADMIN"><AdminLayout /></RoleRoute>}>
           <Route index element={<AdminDashboard />} />
+          <Route path="areas" element={<AreaManagement />} />
+          <Route path="animals" element={<AnimalManagement />} />
+          <Route path="services" element={<ServiceManagement />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="staff" element={<AdminStaffPage />} />
+          <Route path="assignments" element={<AdminAssignmentsPage />} />
+          <Route path="tickets" element={<AdminTicketsPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="admin-animals" element={<AdminAnimalsPage />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Admin" functions={[]} />} />
         </Route>
       </Routes>
