@@ -21,13 +21,13 @@ const zooAreaSchema = new mongoose.Schema(
     },
     habitatType: {
       type: String,
-      default: 'GENERAL',
+      default: 'General',
       trim: true,
     },
     status: {
       type: String,
-      enum: ['OPEN', 'MAINTENANCE', 'CLOSED'],
-      default: 'OPEN',
+      enum: ['Open', 'Maintenance', 'Closed'],
+      default: 'Open',
     },
     location: {
       type: String,

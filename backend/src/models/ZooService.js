@@ -16,8 +16,8 @@ const zooServiceSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['FOOD', 'GUIDE', 'PHOTO', 'EVENT', 'RENTAL'],
-      default: 'EVENT',
+      default: '',
+      trim: true,
     },
     description: {
       type: String,
@@ -29,7 +29,7 @@ const zooServiceSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-    durationMinutes: {
+    duration: {
       type: Number,
       default: 0,
       min: 0,
