@@ -5,7 +5,7 @@ const careLogSchema = new mongoose.Schema(
     animal: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Animal',
-      required: true,
+      default: null,
     },
     staff: {
       type: mongoose.Schema.Types.ObjectId,
@@ -19,7 +19,7 @@ const careLogSchema = new mongoose.Schema(
     },
     careType: {
       type: String,
-      enum: ['FEEDING', 'CLEANING', 'OBSERVATION', 'ENRICHMENT'],
+      enum: ['FEEDING', 'CLEANING', 'OBSERVATION', 'ENRICHMENT', 'MEDICAL_SUPPORT', 'MAINTENANCE', 'CARE'],
       required: true,
     },
     notes: {

@@ -425,6 +425,16 @@ exports.updateStaffTaskStatus = async (req, res) => {
     task.completedAt = status === 'DONE' ? new Date() : null;
     await task.save();
 
+    // Create an activity log for the task status change
+    await CareLog.create({
+      animal: task.animal || null,
+      staff: staff._id,
+      task: task._id,
+      careType: task.taskType === 'CARE' ? 'OBSERVATION' : (task.taskType || 'OBSERVATION'),
+      notes: `Task status updated to ${normalizeStatus(status)}.`,
+      loggedAt: new Date(),
+    });
+
     const populatedTask = await StaffTask.findById(task._id)
       .populate('area', 'name location')
       .populate('animal', 'name species status');
