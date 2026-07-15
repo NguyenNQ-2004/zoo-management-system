@@ -18,7 +18,13 @@ const LoginPage = () => {
 
     try {
       const user = await api.login(email, password);
-      localStorage.setItem('currentUser', JSON.stringify({ email: user.email, role: user.role }));
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        token: user.token
+      }));
       
       switch(user.role) {
         case 'USER': navigate('/user'); break;
