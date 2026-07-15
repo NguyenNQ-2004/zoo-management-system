@@ -12,6 +12,7 @@ router.get('/animals/:id/health', vetController.getAnimalHealthDetail);
 router.put('/animals/:id/health-status', vetController.updateAnimalHealthStatus);
 router.post('/animals/:id/medical-logs', vetController.createMedicalLog);
 router.post('/animals/:id/treatments', vetController.createTreatmentPlan);
+router.get('/animals/:id/medical-history', vetController.getMedicalHistory);
 
 // Treatment specific routes
 router.get('/treatments', vetController.getAllTreatments);

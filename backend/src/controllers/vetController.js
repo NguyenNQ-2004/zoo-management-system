@@ -405,3 +405,52 @@ exports.getTreatmentDetail = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// GET /animals/:id/medical-history (Task 60)
+exports.getMedicalHistory = async (req, res) => {
+  try {
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query._id = req.params.id;
+    } else {
+      query.code = req.params.id;
+    }
+    const animal = await Animal.findOne(query).populate('area').lean();
+    if (!animal) return res.status(404).json({ success: false, message: 'Animal not found' });
+
+    const logs = await MedicalLog.find({ animal: animal._id }).sort({ date: -1 }).lean();
+    const treatments = await Treatment.find({ animal: animal._id }).sort({ startDate: -1 }).lean();
+    const health = await AnimalHealth.findOne({ animal: animal._id }).lean();
+
+    // Group logs or extract diagnoses
+    // Diagnoses in design: Chronic and Resolved
+    const diagnoses = logs.filter(l => l.diagnosis).map(l => ({
+      title: l.diagnosis,
+      type: l.severity === 'HIGH' ? 'CHRONIC' : 'RESOLVED',
+      date: new Date(l.date).toLocaleDateString(),
+      notes: l.notes || l.symptoms || ''
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        animal: {
+          id: animal._id,
+          code: animal.code,
+          name: animal.name,
+          species: animal.species,
+          area: animal.area ? animal.area.name : 'Unknown',
+          status: animal.status,
+          image: `https://ui-avatars.com/api/?name=${animal.name}&background=random`
+        },
+        health: health || { weightKg: 0, temperatureC: 0, appetite: 'NORMAL', condition: 'STABLE', notes: '' },
+        logs,
+        treatments,
+        diagnoses
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching medical history:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

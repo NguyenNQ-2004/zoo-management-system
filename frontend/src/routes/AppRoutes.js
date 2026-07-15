@@ -22,6 +22,7 @@ import MedicalLogEntry from '../pages/veterinary/MedicalLogEntry';
 import TreatmentPlanList from '../pages/veterinary/TreatmentPlanList';
 import TreatmentPlanForm from '../pages/veterinary/TreatmentPlanForm';
 import TreatmentDetail from '../pages/veterinary/TreatmentDetail';
+import MedicalHistory from '../pages/veterinary/MedicalHistory';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import PlaceholderPage from '../components/PlaceholderPage';
 
@@ -63,6 +64,8 @@ const AppRoutes = () => {
           <Route path="treatments" element={<TreatmentPlanList />} />
           <Route path="health/:id/treatments/new" element={<TreatmentPlanForm />} />
           <Route path="treatments/:id" element={<TreatmentDetail />} />
+          <Route path="history" element={<MedicalHistory />} />
+          <Route path="history/:id" element={<MedicalHistory />} />
 
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Veterinary" functions={[]} />} />
         </Route>
