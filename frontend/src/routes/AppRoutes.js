@@ -13,6 +13,7 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
+import StaffTasksPage from '../pages/staff/StaffTasksPage';
 import VetDashboard from '../pages/veterinary/VetDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import PlaceholderPage from '../components/PlaceholderPage';
@@ -37,6 +38,8 @@ const AppRoutes = () => {
         {/* Staff Routes */}
         <Route path="/staff" element={<RoleRoute allowedRole="STAFF"><StaffLayout /></RoleRoute>}>
           <Route index element={<StaffDashboard />} />
+          <Route path="tasks" element={<StaffTasksPage />} />
+          <Route path="veterinary" element={<StaffCareDetail />} />
           <Route path="animals/:animalId/care" element={<StaffCareDetail />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Staff" functions={[]} />} />
         </Route>

@@ -95,6 +95,21 @@
   font-size: 16px;
 }
 
+.staff-dashboard-message {
+  margin-bottom: 24px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #ffffff;
+  color: #23352b;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.staff-dashboard-message.error {
+  border: 1px solid #ffd4cd;
+  background: #fff7f5;
+  color: #b3261e;
+}
+
 .staff-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -315,6 +330,18 @@
   background: #d8e0dc;
 }
 
+.staff-animal-initial {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #d8eee2;
+  color: #005c38;
+  font-size: 20px;
+  font-weight: 900;
+}
+
 .staff-animal-card strong,
 .staff-activity-item strong {
   display: block;
@@ -391,6 +418,26 @@
 
 .activity-dot.normal {
   background: #9fb0a7;
+}
+
+.staff-empty-row,
+.staff-empty-box {
+  color: #536159;
+  font-size: 14px;
+}
+
+.staff-empty-row {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e2e8e4;
+}
+
+.staff-empty-box {
+  border: 1px dashed #cbd8d0;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fbfcfc;
 }
 
 @media (max-width: 1180px) {
