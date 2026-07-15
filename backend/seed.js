@@ -47,6 +47,8 @@ async function seedDatabase() {
       createdUsers[userData.email] = user;
     }
 
+    console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
+
     const areas = await ZooArea.insertMany([
       {
         code: 'SAVANNAH',

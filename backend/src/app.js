@@ -13,8 +13,7 @@ app.get('/', (req, res) => {
   res.send('Zoo Management API is running...');
 });
 
-// TODO: Add route imports here later
-// const userRoutes = require('./routes/userRoutes');
-// app.use('/api/users', userRoutes);
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 module.exports = app;
