@@ -13,6 +13,11 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
 import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
+import ExploreZoo from '../pages/user/ExploreZoo';
+import GuestServices from '../pages/user/GuestServices';
+import AnimalsPage from '../pages/user/AnimalsPage';
+import BookingPage from '../pages/user/BookingPage';
+import MyTickets from '../pages/user/MyTickets';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
 import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
@@ -58,6 +63,11 @@ const AppRoutes = () => {
         {/* User Routes */}
         <Route path="/user" element={<RoleRoute allowedRole="USER"><UserLayout /></RoleRoute>}>
           <Route index element={<UserDashboard />} />
+          <Route path="explore" element={<ExploreZoo />} />
+          <Route path="services" element={<GuestServices />} />
+          <Route path="animals" element={<AnimalsPage />} />
+          <Route path="book" element={<BookingPage />} />
+          <Route path="tickets" element={<MyTickets />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="User" functions={[]} />} />
         </Route>
 
