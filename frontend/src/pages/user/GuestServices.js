@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, SlidersHorizontal, Clock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './User.css';
 import './GuestServices.css';
 
 const GuestServices = () => {
+  const navigate = useNavigate();
   const tabs = ['All Services', 'Tours & Education', 'Transport', 'Animal Encounters', 'Accessibility', 'VIP Experiences'];
+  
+  const [activeTab, setActiveTab] = useState('All Services');
+  const [searchQuery, setSearchQuery] = useState('');
   
   const services = [
     {
@@ -71,6 +76,12 @@ const GuestServices = () => {
     }
   ];
 
+  const filteredServices = services.filter(svc => {
+    const matchesTab = activeTab === 'All Services' || svc.category === activeTab.toUpperCase();
+    const matchesSearch = svc.title.toLowerCase().includes(searchQuery.toLowerCase()) || svc.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
   return (
     <div id="services" style={{ padding: '80px 60px', maxWidth: '1400px', margin: '0 auto', backgroundColor: '#fff' }}>
       <div className="services-header">
@@ -85,7 +96,7 @@ const GuestServices = () => {
         <div className="services-controls">
           <div className="services-search">
             <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
-            <input type="text" placeholder="Search services..." />
+            <input type="text" placeholder="Search services..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           <button className="btn-filter">
             <SlidersHorizontal size={16} /> Filters
@@ -95,45 +106,56 @@ const GuestServices = () => {
 
       <div className="services-tabs">
         {tabs.map((tab, idx) => (
-          <div key={idx} className={`service-tab ${idx === 0 ? 'active' : ''}`}>
+          <div 
+            key={idx} 
+            className={`service-tab ${activeTab === tab ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+            style={{ cursor: 'pointer' }}
+          >
             {tab}
           </div>
         ))}
       </div>
 
       <div className="services-grid">
-        {services.map(svc => (
-          <div key={svc.id} className="service-card">
-            <div className="service-image">
-              <img src={svc.image} alt={svc.title} />
-              <div className="service-category">{svc.category}</div>
-              {svc.badge && (
-                <div className={`service-badge ${svc.badge.type}`}>
-                  {svc.badge.text}
-                </div>
-              )}
-            </div>
-            
-            <div className="service-content">
-              <div className="service-header">
-                <h3>{svc.title}</h3>
-                <div className="service-price">{svc.price}</div>
+        {filteredServices.length > 0 ? (
+          filteredServices.map(svc => (
+            <div key={svc.id} className="service-card">
+              <div className="service-image">
+                <img src={svc.image} alt={svc.title} />
+                <div className="service-category">{svc.category}</div>
+                {svc.badge && (
+                  <div className={`service-badge ${svc.badge.type}`}>
+                    {svc.badge.text}
+                  </div>
+                )}
               </div>
-              <p className="service-desc">{svc.desc}</p>
               
-              <div className="service-info">
-                <div className="info-row">
-                  <Clock size={16} /> {svc.schedule}
+              <div className="service-content">
+                <div className="service-header">
+                  <h3>{svc.title}</h3>
+                  <div className="service-price">{svc.price}</div>
                 </div>
-                <div className="info-row">
-                  <MapPin size={16} /> {svc.location}
+                <p className="service-desc">{svc.desc}</p>
+                
+                <div className="service-info">
+                  <div className="info-row">
+                    <Clock size={16} /> {svc.schedule}
+                  </div>
+                  <div className="info-row">
+                    <MapPin size={16} /> {svc.location}
+                  </div>
                 </div>
-              </div>
 
-              <button className="btn-primary btn-block">View Details</button>
+                <button className="btn-primary btn-block" onClick={() => navigate(`/user/services/${svc.id}`)}>View Details</button>
+              </div>
             </div>
+          ))
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px', color: '#6b7280', fontSize: '16px' }}>
+            No services found matching your criteria. Try adjusting your search or filters.
           </div>
-        ))}
+        )}
       </div>
 
       <button className="btn-outline">View All 18 Services</button>

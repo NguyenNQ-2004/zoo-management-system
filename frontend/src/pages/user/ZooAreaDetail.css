@@ -1,0 +1,111 @@
+.area-hero {
+  height: 400px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.area-hero-content {
+  position: relative;
+  z-index: 10;
+  padding: 60px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+}
+.area-hero-content h1 {
+  font-size: 48px;
+  margin: 10px 0 0 0;
+  font-weight: 800;
+}
+.badge-status.open {
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.area-content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 60px;
+  display: flex;
+  gap: 40px;
+}
+.area-main {
+  flex: 2;
+}
+.area-main h2 {
+  font-size: 28px;
+  margin: 0 0 20px 0;
+}
+.area-desc {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4b5563;
+}
+.area-animals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.area-animal-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 200px;
+  cursor: pointer;
+}
+.area-animal-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.area-animal-card:hover img {
+  transform: scale(1.05);
+}
+.area-animal-card .card-name {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.area-sidebar {
+  flex: 1;
+}
+.info-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+}
+.info-card h3 {
+  margin: 0 0 20px 0;
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.info-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+.info-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
