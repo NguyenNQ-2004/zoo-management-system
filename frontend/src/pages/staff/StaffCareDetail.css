@@ -1,0 +1,491 @@
+.care-detail-page {
+  min-height: 100vh;
+  background: #f5f7f6;
+  color: #07110c;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.care-topbar {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 38px 0 30px;
+  border-bottom: 1px solid #dce4df;
+  background: #fbfcfc;
+}
+
+.care-search {
+  width: min(100%, 280px);
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #f1f4f2;
+  color: #2b3b32;
+}
+
+.care-search span {
+  font-size: 20px;
+}
+
+.care-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #213129;
+  font-size: 14px;
+}
+
+.care-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.care-actions button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #0f251a;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.care-actions button:hover {
+  background: #e8efeb;
+}
+
+.care-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #d7e4dc;
+  background:
+    radial-gradient(circle at 50% 35%, #f1cc9a 0 18%, transparent 19%),
+    radial-gradient(circle at 50% 78%, #0d5235 0 34%, transparent 35%),
+    linear-gradient(135deg, #f7eee0, #8bb6a1);
+}
+
+.care-content {
+  padding: 40px 38px 48px;
+}
+
+.care-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.care-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #10251a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.care-breadcrumb b {
+  color: #6d7b73;
+}
+
+.care-title-row h1 {
+  margin: 0;
+  color: #07110c;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.add-care-log-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 22px;
+  background: #126d43;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.care-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.care-left-column,
+.care-right-column {
+  display: grid;
+  gap: 24px;
+}
+
+.care-panel,
+.animal-profile-card {
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.animal-profile-card {
+  padding: 16px;
+}
+
+.animal-photo-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  aspect-ratio: 1.45 / 1;
+  background: #d8e0dc;
+}
+
+.animal-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.healthy-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: #9ef3bd;
+  color: #09643b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.animal-profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8e4;
+}
+
+.animal-profile-heading h2 {
+  margin: 0;
+  color: #005c38;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.animal-profile-heading p {
+  max-width: 180px;
+  margin: 8px 0 0;
+  color: #10251a;
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.animal-id {
+  min-width: 84px;
+  border-radius: 4px;
+  padding: 6px 9px;
+  background: #e9eeeb;
+  color: #27372f;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.animal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 16px 0 0;
+}
+
+.animal-meta-grid dt {
+  color: #415047;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.animal-meta-grid dd {
+  margin: 4px 0 0;
+  color: #07110c;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.care-panel {
+  padding: 24px;
+}
+
+.care-panel h2 {
+  margin: 0;
+  color: #07110c;
+  font-size: 25px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.vital-panel h2 span {
+  color: #00663b;
+}
+
+.vital-list {
+  display: grid;
+  gap: 24px;
+  margin-top: 22px;
+}
+
+.vital-item div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+  color: #07110c;
+  font-size: 14px;
+}
+
+.vital-item strong {
+  font-size: 14px;
+}
+
+.vital-item i {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #126d43 var(--level), #e5ebe7 0);
+}
+
+.care-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.care-panel-header > span {
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #f2f5f3;
+  color: #213129;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.care-panel-header button {
+  border: 0;
+  background: transparent;
+  color: #005c38;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-items {
+  display: grid;
+  gap: 14px;
+}
+
+.checklist-item {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #dbe4df;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+}
+
+.checklist-item.attention {
+  border-color: #ffd4cd;
+  background: #fff7f5;
+}
+
+.checklist-icon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.checklist-icon.done {
+  background: #9ef3bd;
+  color: #0b6a41;
+}
+
+.checklist-icon.done::after {
+  width: 9px;
+  height: 5px;
+  content: "";
+  border-left: 2px solid #0b6a41;
+  border-bottom: 2px solid #0b6a41;
+  transform: rotate(-45deg);
+}
+
+.checklist-icon.pending {
+  border: 2px solid #c9d5ce;
+  background: #ffffff;
+}
+
+.checklist-icon.attention {
+  background: #ffd8d1;
+  color: #d6332a;
+}
+
+.checklist-item strong {
+  display: block;
+  color: #07110c;
+  font-size: 14px;
+}
+
+.checklist-item p {
+  margin: 4px 0 0;
+  color: #26372e;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.checklist-item time {
+  color: #07110c;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.checklist-item em {
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: #eef2f0;
+  color: #14251c;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.checklist-item button {
+  border: 0;
+  background: transparent;
+  color: #005c38;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.logs-panel {
+  min-height: 250px;
+}
+
+.log-table {
+  display: grid;
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.6fr) minmax(100px, 0.55fr) minmax(240px, 1.5fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 64px;
+  border-top: 1px solid #e2e8e4;
+  color: #07110c;
+  font-size: 14px;
+}
+
+.log-head {
+  min-height: 34px;
+  border-top: 0;
+  color: #14251c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.log-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: #e8ece9;
+  color: #27372f;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+@media (max-width: 1120px) {
+  .care-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .care-left-column {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .care-topbar,
+  .care-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .care-topbar {
+    padding: 18px 22px;
+  }
+
+  .care-content {
+    padding: 28px 22px 40px;
+  }
+
+  .care-title-row h1 {
+    font-size: 34px;
+  }
+
+  .care-left-column {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-item {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .checklist-item time,
+  .checklist-item em,
+  .checklist-item button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .log-table {
+    overflow-x: auto;
+  }
+
+  .log-row {
+    min-width: 640px;
+  }
+}
