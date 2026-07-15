@@ -1,86 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, Clock, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './User.css';
 import './GuestServices.css';
+import { serviceApi } from '../../services/api';
 
 const GuestServices = () => {
   const navigate = useNavigate();
-  const tabs = ['All Services', 'Tours & Education', 'Transport', 'Animal Encounters', 'Accessibility', 'VIP Experiences'];
-  
   const [activeTab, setActiveTab] = useState('All Services');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const services = [
-    {
-      id: 1,
-      title: 'Guided Tour',
-      price: '$25.00',
-      category: 'TOURS & EDUCATION',
-      desc: 'A 90-minute educational journey led by our expert conservationists, exploring rare species and sanctuary efforts.',
-      schedule: 'Daily: 09:00 - 15:00',
-      location: 'Main Plaza Hub',
-      badge: { text: 'Top Rated', type: 'green' },
-      image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 2,
-      title: 'Electric Shuttle',
-      price: 'Free',
-      category: 'TRANSPORT',
-      desc: 'Hop-on hop-off zero-emission shuttles running every 10 minutes between major exhibit zones and facilities.',
-      schedule: 'Daily: 08:00 - 18:00',
-      location: 'Multiple Shuttle Stops',
-      image: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 3,
-      title: 'Animal Feeding',
-      price: '$15.00',
-      category: 'ANIMAL ENCOUNTERS',
-      desc: 'Interactive feeding sessions with giraffes or sea lions under the direct supervision of our veterinary staff.',
-      schedule: 'Scheduled Slots',
-      location: 'Giraffe Terrace',
-      badge: { text: 'Limited Slots', type: 'red' },
-      image: 'https://images.unsplash.com/photo-1564750975191-0edd1e8093de?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 4,
-      title: 'VIP Safari',
-      price: '$120.00',
-      category: 'VIP EXPERIENCES',
-      desc: 'Private 4x4 safari through the savanna zone with a senior zoologist and exclusive behind-the-scenes access.',
-      schedule: 'By Appointment Only',
-      location: 'VIP Lounge Entry',
-      image: 'https://images.unsplash.com/photo-1547471080-7cb2cb6a5a36?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 5,
-      title: 'Photo Workshop',
-      price: '$45.00',
-      category: 'TOURS & EDUCATION',
-      desc: 'Master wildlife photography with professional instructors. Access hidden viewpoints for the perfect shot.',
-      schedule: 'Sat & Sun: 07:00',
-      location: 'Aviary Entrance',
-      image: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 6,
-      title: 'Stroller Rental',
-      price: '$10.00',
-      category: 'ACCESSIBILITY',
-      desc: 'Ergonomic single and double strollers available for daily rental to ensure comfort for your little explorers.',
-      schedule: 'Daily: All Day',
-      location: 'Visitor Center',
-      image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    }
-  ];
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const data = await serviceApi.getAll();
+        const mapped = data.map((svc) => ({
+          id: svc._id,
+          title: svc.name,
+          price: svc.price === 0 ? 'Free' : `$${svc.price.toFixed(2)}`,
+          category: svc.category ? svc.category.toUpperCase() : 'OTHER',
+          desc: svc.description,
+          schedule: svc.duration > 0 ? `${svc.duration} mins` : 'Flexible',
+          location: 'Sanctuary Area',
+          badge: svc.isActive ? null : { text: 'Currently Unavailable', type: 'red' },
+          image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+        }));
+        setServices(mapped);
+      } catch (err) {
+        console.error('Failed to fetch services', err);
+      }
+    };
+    fetchServices();
+  }, []);
 
   const filteredServices = services.filter(svc => {
     const matchesTab = activeTab === 'All Services' || svc.category === activeTab.toUpperCase();
     const matchesSearch = svc.title.toLowerCase().includes(searchQuery.toLowerCase()) || svc.desc.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
+
+  const dynamicTabs = ['All Services', ...new Set(services.map(s => s.category).filter(Boolean))].map(t => t.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '));
 
   return (
     <div id="services" style={{ padding: '80px 60px', maxWidth: '1400px', margin: '0 auto', backgroundColor: '#fff' }}>
@@ -105,11 +66,11 @@ const GuestServices = () => {
       </div>
 
       <div className="services-tabs">
-        {tabs.map((tab, idx) => (
+        {dynamicTabs.map((tab, idx) => (
           <div 
             key={idx} 
-            className={`service-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
+            className={`service-tab ${activeTab === tab.toUpperCase() || (tab === 'All Services' && activeTab === 'All Services') ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab === 'All Services' ? tab : tab.toUpperCase())}
             style={{ cursor: 'pointer' }}
           >
             {tab}

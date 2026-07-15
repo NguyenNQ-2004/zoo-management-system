@@ -51,7 +51,7 @@ const animalSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Active', 'Inactive', 'Transferred'],
+      enum: ['Active', 'Inactive', 'Transferred', 'HEALTHY', 'OBSERVATION', 'TREATMENT'],
       default: 'Active',
     },
     caretaker: {

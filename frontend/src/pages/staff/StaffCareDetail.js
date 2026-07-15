@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import './StaffCareDetail.css';
 
 const statusOptions = [
+  { value: 'Active', label: 'Active' },
   { value: 'HEALTHY', label: 'Healthy' },
   { value: 'OBSERVATION', label: 'Observation' },
   { value: 'TREATMENT', label: 'Treatment' },
