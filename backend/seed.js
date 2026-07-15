@@ -26,7 +26,7 @@ const seedDatabase = async () => {
       const user = new User(u);
       await user.save();
     }
-    
+
     console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
     console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
 
