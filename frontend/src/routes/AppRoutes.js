@@ -9,6 +9,7 @@ import AdminLayout from '../layouts/AdminLayout';
 
 // Pages
 import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import VetDashboard from '../pages/veterinary/VetDashboard';
@@ -24,6 +25,7 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* User Routes */}
         <Route path="/user" element={<RoleRoute allowedRole="USER"><UserLayout /></RoleRoute>}>

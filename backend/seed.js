@@ -46,6 +46,12 @@ async function seedDatabase() {
       await user.save();
       createdUsers[userData.email] = user;
     }
+<<<<<<< HEAD
+
+    console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
+    console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
+=======
+>>>>>>> 5f02b195949009248de799212995fab0262a08dc
 
     const areas = await ZooArea.insertMany([
       {
