@@ -125,7 +125,7 @@ const LoginPage = () => {
                 <input type="checkbox" style={{ accentColor: '#1B5E3C' }} />
                 <span style={{ fontSize: '13px', color: '#666' }}>Remember me</span>
               </label>
-              <a href="#" style={{ fontSize: '13px', color: '#333', textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
+              <button type="button" style={{ fontSize: '13px', color: '#333', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600 }}>Forgot password?</button>
             </div>
 
             <button disabled={loading} type="submit" style={{ padding: '16px', backgroundColor: '#1B5E3C', color: 'white', border: 'none', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '16px', marginTop: '10px', transition: 'background-color 0.2s', opacity: loading ? 0.8 : 1 }}>

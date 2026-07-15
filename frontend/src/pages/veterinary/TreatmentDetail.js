@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Clock } from 'lucide-react';
 
 const TreatmentDetail = () => {
   const { id } = useParams();

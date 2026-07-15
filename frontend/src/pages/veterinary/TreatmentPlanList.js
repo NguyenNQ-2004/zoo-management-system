@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, Filter, Plus } from 'lucide-react';
+import { Filter, Plus } from 'lucide-react';
 
 const TreatmentPlanList = () => {
   const navigate = useNavigate();
@@ -22,6 +22,10 @@ const TreatmentPlanList = () => {
     };
     fetchTreatments();
   }, []);
+
+  if (loading) {
+    return <div style={{ padding: '24px' }}>Loading treatment plans...</div>;
+  }
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>

@@ -1,10 +1,20 @@
 const ZooService = require('../models/ZooService');
 
+const serializeService = (service) => {
+  const plainService = typeof service.toObject === 'function' ? service.toObject() : service;
+  const duration = plainService.duration ?? plainService.durationMinutes ?? 0;
+  return {
+    ...plainService,
+    duration,
+    durationMinutes: duration,
+  };
+};
+
 // GET /api/services
 exports.getAllServices = async (req, res) => {
   try {
     const services = await ZooService.find().sort({ createdAt: -1 });
-    res.json(services);
+    res.json(services.map(serializeService));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -14,7 +24,7 @@ exports.getAllServices = async (req, res) => {
 // POST /api/services
 exports.createService = async (req, res) => {
   try {
-    const { code, name, category, description, price, duration, isActive } = req.body;
+    const { code, name, category, description, price, duration, durationMinutes, isActive } = req.body;
 
     const existingService = await ZooService.findOne({ code: code.toUpperCase() });
     if (existingService) {
@@ -27,11 +37,11 @@ exports.createService = async (req, res) => {
       category,
       description,
       price,
-      duration,
+      duration: Number(duration ?? durationMinutes ?? 0),
       isActive: isActive !== undefined ? isActive : true,
     });
 
-    res.status(201).json(service);
+    res.status(201).json(serializeService(service));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -46,7 +56,7 @@ exports.updateService = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    const { code, name, category, description, price, duration, isActive } = req.body;
+    const { code, name, category, description, price, duration, durationMinutes, isActive } = req.body;
 
     // Check for duplicate code if it's being changed
     if (code && code.toUpperCase() !== service.code) {
@@ -61,11 +71,13 @@ exports.updateService = async (req, res) => {
     service.category = category !== undefined ? category : service.category;
     service.description = description !== undefined ? description : service.description;
     service.price = price !== undefined ? price : service.price;
-    service.duration = duration !== undefined ? duration : service.duration;
+    service.duration = duration !== undefined || durationMinutes !== undefined
+      ? Number(duration ?? durationMinutes ?? 0)
+      : service.duration;
     service.isActive = isActive !== undefined ? isActive : service.isActive;
 
     const updatedService = await service.save();
-    res.json(updatedService);
+    res.json(serializeService(updatedService));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -82,7 +94,7 @@ exports.toggleServiceStatus = async (req, res) => {
 
     service.isActive = !service.isActive;
     const updatedService = await service.save();
-    res.json(updatedService);
+    res.json(serializeService(updatedService));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });

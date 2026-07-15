@@ -47,11 +47,54 @@ const buildUserFilters = ({ role, status, search }) => {
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
+const normalizeAreaStatus = (status) => {
+  if (['Open', 'Maintenance', 'Closed'].includes(status)) return status;
+  const value = String(status || '').toUpperCase();
+  if (value === 'MAINTENANCE') return 'Maintenance';
+  if (value === 'CLOSED') return 'Closed';
+  return 'Open';
+};
+
+const normalizeAnimalGender = (gender) => {
+  const value = String(gender || '').toUpperCase();
+  if (value === 'MALE') return 'Male';
+  if (value === 'FEMALE') return 'Female';
+  return ['Male', 'Female', 'Unknown'].includes(gender) ? gender : 'Unknown';
+};
+
+const normalizeAnimalHealthStatus = (healthStatus, legacyStatus) => {
+  if (['Healthy', 'Sick', 'Under Treatment', 'Quarantine', 'Recovered'].includes(healthStatus)) {
+    return healthStatus;
+  }
+
+  const status = String(legacyStatus || healthStatus || '').toUpperCase();
+  if (status === 'TREATMENT' || status === 'UNDER TREATMENT') return 'Under Treatment';
+  if (status === 'OBSERVATION' || status === 'MONITORING') return 'Sick';
+  if (status === 'TRANSFERRED') return 'Recovered';
+  return 'Healthy';
+};
+
+const normalizeAnimalStatus = (status) => {
+  if (['Active', 'Inactive', 'Transferred'].includes(status)) return status;
+  const value = String(status || '').toUpperCase();
+  if (value === 'TRANSFERRED') return 'Transferred';
+  if (value === 'INACTIVE') return 'Inactive';
+  return 'Active';
+};
+
+const normalizeAnimalDoc = (animal) => {
+  if (!animal) return animal;
+  animal.gender = normalizeAnimalGender(animal.gender);
+  animal.healthStatus = normalizeAnimalHealthStatus(animal.healthStatus, animal.status);
+  animal.status = normalizeAnimalStatus(animal.status);
+  return animal;
+};
+
 const sanitizeArea = (area) => ({
   _id: area._id,
   code: area.code,
   name: area.name,
-  status: area.status,
+  status: normalizeAreaStatus(area.status),
   location: area.location,
 });
 
@@ -62,11 +105,14 @@ const sanitizeAnimal = (animal, health = null) => ({
   species: animal.species,
   imageUrl: animal.imageUrl,
   scientificName: animal.scientificName,
-  gender: animal.gender,
+  gender: normalizeAnimalGender(animal.gender),
   dateOfBirth: animal.dateOfBirth,
+  age: animal.age,
+  healthStatus: normalizeAnimalHealthStatus(animal.healthStatus, animal.status),
+  behavior: animal.behavior,
   origin: animal.origin,
   diet: animal.diet,
-  status: animal.status,
+  status: normalizeAnimalStatus(animal.status),
   notes: animal.notes,
   area: animal.area
     ? {
@@ -142,7 +188,8 @@ const sanitizeService = (service) => ({
   category: service.category,
   description: service.description,
   price: service.price,
-  durationMinutes: service.durationMinutes,
+  duration: service.duration ?? service.durationMinutes ?? 0,
+  durationMinutes: service.duration ?? service.durationMinutes ?? 0,
   isActive: service.isActive,
   createdAt: service.createdAt,
   updatedAt: service.updatedAt,
@@ -457,6 +504,7 @@ const assignStaffArea = async (req, res) => {
       { $pull: { assignedStaff: staffUser._id } }
     );
 
+    area.status = normalizeAreaStatus(area.status);
     area.assignedStaff.addToSet(staffUser._id);
     staffUser.assignedArea = area.name;
 
@@ -570,7 +618,7 @@ const upsertAnimalHealth = async (animalId, health = {}) => {
   return AnimalHealth.findOneAndUpdate(
     { animal: animalId },
     { $set: healthFields, $setOnInsert: { animal: animalId } },
-    { new: true, upsert: true }
+    { returnDocument: 'after', upsert: true }
   ).populate('checkedBy', '-password');
 };
 
@@ -582,11 +630,14 @@ const createAnimal = async (req, res) => {
       species,
       imageUrl = '',
       scientificName = '',
-      gender = 'UNKNOWN',
+      gender = 'Unknown',
       dateOfBirth,
+      age,
+      healthStatus,
+      behavior = '',
       origin = '',
       diet = '',
-      status = 'HEALTHY',
+      status = 'Active',
       area,
       caretaker,
       notes = '',
@@ -621,11 +672,14 @@ const createAnimal = async (req, res) => {
       species: species.trim(),
       imageUrl: imageUrl.trim(),
       scientificName: scientificName.trim(),
-      gender,
+      gender: normalizeAnimalGender(gender),
       dateOfBirth: dateOfBirth || null,
+      age: age === '' || age === undefined || age === null ? null : Number(age),
+      healthStatus: normalizeAnimalHealthStatus(healthStatus, status),
+      behavior: behavior.trim(),
       origin: origin.trim(),
       diet: diet.trim(),
-      status,
+      status: normalizeAnimalStatus(status),
       area,
       caretaker: caretaker && isValidObjectId(caretaker) ? caretaker : null,
       notes: notes.trim(),
@@ -678,6 +732,9 @@ const updateAnimal = async (req, res) => {
       scientificName,
       gender,
       dateOfBirth,
+      age,
+      healthStatus,
+      behavior,
       origin,
       diet,
       status,
@@ -686,6 +743,8 @@ const updateAnimal = async (req, res) => {
       notes,
       health,
     } = req.body;
+
+    normalizeAnimalDoc(animal);
 
     if (code && code.toUpperCase().trim() !== animal.code) {
       const existingAnimal = await Animal.findOne({ code: code.toUpperCase().trim() });
@@ -702,11 +761,14 @@ const updateAnimal = async (req, res) => {
     if (species) animal.species = species.trim();
     if (typeof imageUrl === 'string') animal.imageUrl = imageUrl.trim();
     if (typeof scientificName === 'string') animal.scientificName = scientificName.trim();
-    if (gender) animal.gender = gender;
+    if (gender) animal.gender = normalizeAnimalGender(gender);
     if (Object.prototype.hasOwnProperty.call(req.body, 'dateOfBirth')) animal.dateOfBirth = dateOfBirth || null;
+    if (Object.prototype.hasOwnProperty.call(req.body, 'age')) animal.age = age === '' || age === null ? null : Number(age);
+    if (healthStatus) animal.healthStatus = normalizeAnimalHealthStatus(healthStatus, status);
+    if (typeof behavior === 'string') animal.behavior = behavior.trim();
     if (typeof origin === 'string') animal.origin = origin.trim();
     if (typeof diet === 'string') animal.diet = diet.trim();
-    if (status) animal.status = status;
+    if (status) animal.status = normalizeAnimalStatus(status);
     if (area && isValidObjectId(area)) animal.area = area;
     if (Object.prototype.hasOwnProperty.call(req.body, 'caretaker')) {
       animal.caretaker = caretaker && isValidObjectId(caretaker) ? caretaker : null;
@@ -1144,6 +1206,7 @@ const createService = async (req, res) => {
       category = 'EVENT',
       description = '',
       price = 0,
+      duration,
       durationMinutes = 0,
       isActive = true,
     } = req.body;
@@ -1169,7 +1232,7 @@ const createService = async (req, res) => {
       category,
       description: description.trim(),
       price: Number(price),
-      durationMinutes: Number(durationMinutes),
+      duration: Number(duration ?? durationMinutes ?? 0),
       isActive,
     });
 
@@ -1206,7 +1269,7 @@ const updateService = async (req, res) => {
       });
     }
 
-    const { code, name, category, description, price, durationMinutes, isActive } = req.body;
+    const { code, name, category, description, price, duration, durationMinutes, isActive } = req.body;
 
     if (code && code.toUpperCase().trim() !== service.code) {
       const existingService = await ZooService.findOne({ code: code.toUpperCase().trim() });
@@ -1223,7 +1286,9 @@ const updateService = async (req, res) => {
     if (category) service.category = category;
     if (typeof description === 'string') service.description = description.trim();
     if (price !== undefined) service.price = Number(price);
-    if (durationMinutes !== undefined) service.durationMinutes = Number(durationMinutes);
+    if (duration !== undefined || durationMinutes !== undefined) {
+      service.duration = Number(duration ?? durationMinutes ?? 0);
+    }
     if (typeof isActive === 'boolean') service.isActive = isActive;
 
     await service.save();
@@ -1362,7 +1427,10 @@ const getReports = async (req, res) => {
     const paidBookings = bookings.filter((booking) => booking.paymentStatus === 'PAID');
     const revenue = paidBookings.reduce((total, booking) => total + booking.totalAmount, 0);
     const pendingBookings = bookings.filter((booking) => booking.status === 'PENDING').length;
-    const monitoringAnimals = animals.filter((animal) => ['OBSERVATION', 'TREATMENT'].includes(animal.status)).length;
+    const monitoringAnimals = animals.filter((animal) => {
+      const healthStatus = normalizeAnimalHealthStatus(animal.healthStatus, animal.status);
+      return ['Sick', 'Under Treatment', 'Quarantine'].includes(healthStatus);
+    }).length;
     const openTasks = tasks.filter((task) => task.status !== 'DONE').length;
 
     const bookingStatus = ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED'].map((status) => ({
@@ -1375,9 +1443,9 @@ const getReports = async (req, res) => {
       count: tasks.filter((task) => task.status === status).length,
     }));
 
-    const animalStatus = ['HEALTHY', 'OBSERVATION', 'TREATMENT', 'TRANSFERRED'].map((status) => ({
+    const animalStatus = ['Healthy', 'Sick', 'Under Treatment', 'Quarantine', 'Recovered'].map((status) => ({
       status,
-      count: animals.filter((animal) => animal.status === status).length,
+      count: animals.filter((animal) => normalizeAnimalHealthStatus(animal.healthStatus, animal.status) === status).length,
     }));
 
     const ticketSalesMap = new Map();

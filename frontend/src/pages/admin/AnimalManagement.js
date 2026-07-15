@@ -21,7 +21,7 @@ const AnimalManagement = () => {
 
   const [formData, setFormData] = useState({
     code: '', name: '', species: '', gender: 'Unknown', age: '', healthStatus: 'Healthy',
-    behavior: '', origin: '', area: '', status: 'Active', notes: '',
+    behavior: '', origin: '', area: '', status: 'Active', imageUrl: '', notes: '',
   });
 
   const fetchData = useCallback(async () => {
@@ -48,7 +48,7 @@ const AnimalManagement = () => {
 
   const openCreateModal = () => {
     setEditingAnimal(null);
-    setFormData({ code: '', name: '', species: '', gender: 'Unknown', age: '', healthStatus: 'Healthy', behavior: '', origin: '', area: areas[0]?._id || '', status: 'Active', notes: '' });
+    setFormData({ code: '', name: '', species: '', gender: 'Unknown', age: '', healthStatus: 'Healthy', behavior: '', origin: '', area: areas[0]?._id || '', status: 'Active', imageUrl: '', notes: '' });
     setShowModal(true);
     setError('');
   };
@@ -58,7 +58,7 @@ const AnimalManagement = () => {
     setFormData({
       code: animal.code, name: animal.name, species: animal.species, gender: animal.gender,
       age: animal.age || '', healthStatus: animal.healthStatus, behavior: animal.behavior || '',
-      origin: animal.origin || '', area: animal.area?._id || '', status: animal.status, notes: animal.notes || '',
+      origin: animal.origin || '', area: animal.area?._id || '', status: animal.status, imageUrl: animal.imageUrl || '', notes: animal.notes || '',
     });
     setShowModal(true);
     setError('');
@@ -201,7 +201,11 @@ const AnimalManagement = () => {
           {animals.map((animal) => (
             <div className="animal-card" key={animal._id}>
               <div className="animal-card-image">
-                <span className="material-symbols-outlined animal-icon">pets</span>
+                {animal.imageUrl ? (
+                  <img src={animal.imageUrl} alt={animal.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span className="material-symbols-outlined animal-icon">pets</span>
+                )}
                 <div className="health-badge-wrapper" style={{ position: 'absolute', top: 12, right: 12 }}>
                   <span className={`health-badge ${getHealthClass(animal.healthStatus)}`}>
                     <span className="dot"></span>
@@ -294,6 +298,10 @@ const AnimalManagement = () => {
                 <div className="form-group">
                   <label>Loài</label>
                   <input type="text" required value={formData.species} onChange={(e) => setFormData({ ...formData, species: e.target.value })} placeholder="VD: Sư tử châu Phi (Panthera leo)" />
+                </div>
+                <div className="form-group">
+                  <label>Link ảnh</label>
+                  <input type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/animal.jpg" />
                 </div>
                 <div className="form-row">
                   <div className="form-group">

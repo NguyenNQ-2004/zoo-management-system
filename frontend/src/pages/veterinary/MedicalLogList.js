@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, Filter } from 'lucide-react';
+import { Search, Download } from 'lucide-react';
 
 const MedicalLogList = () => {
   const navigate = useNavigate();
@@ -25,6 +25,10 @@ const MedicalLogList = () => {
     };
     fetchLogs();
   }, []);
+
+  if (loading) {
+    return <div style={{ padding: '24px' }}>Loading medical logs...</div>;
+  }
 
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>

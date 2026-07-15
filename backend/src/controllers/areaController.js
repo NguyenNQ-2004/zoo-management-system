@@ -1,6 +1,27 @@
 const ZooArea = require('../models/ZooArea');
 const Animal = require('../models/Animal');
 
+const normalizeAreaStatus = (status) => {
+  if (['Open', 'Maintenance', 'Closed'].includes(status)) return status;
+  const value = String(status || '').toUpperCase();
+  if (value === 'MAINTENANCE') return 'Maintenance';
+  if (value === 'CLOSED') return 'Closed';
+  return 'Open';
+};
+
+const normalizeAreaDoc = (area) => {
+  if (area) area.status = normalizeAreaStatus(area.status);
+  return area;
+};
+
+const serializeArea = (area) => {
+  const plainArea = typeof area.toObject === 'function' ? area.toObject() : area;
+  return {
+    ...plainArea,
+    status: normalizeAreaStatus(plainArea.status),
+  };
+};
+
 // GET /api/areas
 exports.getAllAreas = async (req, res) => {
   try {
@@ -8,7 +29,7 @@ exports.getAllAreas = async (req, res) => {
       .populate('manager', 'fullName email')
       .populate('assignedStaff', 'fullName email')
       .sort({ createdAt: -1 });
-    res.json(areas);
+    res.json(areas.map(serializeArea));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -25,7 +46,7 @@ exports.getAreaById = async (req, res) => {
     if (!area) {
       return res.status(404).json({ message: 'Area not found' });
     }
-    res.json(area);
+    res.json(serializeArea(area));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -47,7 +68,7 @@ exports.createArea = async (req, res) => {
       name,
       description,
       habitatType,
-      status,
+      status: normalizeAreaStatus(status),
       location,
       capacity,
     });
@@ -81,7 +102,8 @@ exports.updateArea = async (req, res) => {
     area.name = name || area.name;
     area.description = description !== undefined ? description : area.description;
     area.habitatType = habitatType || area.habitatType;
-    area.status = status || area.status;
+    normalizeAreaDoc(area);
+    area.status = status ? normalizeAreaStatus(status) : area.status;
     area.location = location !== undefined ? location : area.location;
     area.capacity = capacity !== undefined ? capacity : area.capacity;
 

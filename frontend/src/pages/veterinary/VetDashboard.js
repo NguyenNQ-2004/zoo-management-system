@@ -203,7 +203,7 @@ const VetDashboard = () => {
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-dark)' }}>Critical Care Watchlist</h3>
-              <a href="#" style={{ color: 'var(--primary-green)', fontSize: '14px', textDecoration: 'none', fontWeight: '500' }}>View All Critical</a>
+              <button type="button" style={{ color: 'var(--primary-green)', background: 'none', border: 'none', padding: 0, fontSize: '14px', cursor: 'pointer', fontWeight: '500' }}>View All Critical</button>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
               <thead>

@@ -1,5 +1,5 @@
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 const API_URL = API_BASE_URL;
 
 const getCurrentUser = () => {
@@ -40,6 +40,10 @@ const parseResponse = async (response) => {
     const message = typeof body === 'string'
       ? body
       : body.message;
+
+    if (typeof message === 'string' && message.trim().startsWith('<!DOCTYPE html>')) {
+      throw new Error('API route was not found on the backend. Please check that the backend server is running on the same port as the frontend proxy.');
+    }
 
     if (message && message.toLowerCase().includes('proxy error')) {
       throw new Error('Backend server is not running. Please start the backend and try again.');

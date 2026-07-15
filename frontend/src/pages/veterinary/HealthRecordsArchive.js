@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, AlertTriangle } from 'lucide-react';
+import { Search, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../../components/vet/StatusBadge';
 import { api } from '../../services/api';
 
@@ -241,7 +241,7 @@ const HealthRecordsArchive = () => {
                   </span>
                 </td>
                 <td style={{ padding: '16px 0' }}>
-                  <a href="#" style={{ color: 'var(--primary-green)', textDecoration: 'none', fontWeight: '600', fontSize: '13px' }}>Details</a>
+                  <button type="button" style={{ color: 'var(--primary-green)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>Details</button>
                 </td>
               </tr>
             ))}

@@ -39,8 +39,8 @@ const AdminLayout = () => {
         <NavLink to="/admin/tickets" style={navLinkStyle}>Tickets</NavLink>
         <NavLink to="/admin/reports" style={navLinkStyle}>Reports</NavLink>
         <div style={{ marginTop: 'auto' }}>
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             style={{ width: '100%', background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.4)', padding: '10px', cursor: 'pointer', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             Đăng xuất

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Download, ClipboardList, Activity, ArrowRightLeft, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ClipboardList, Activity, ArrowRightLeft, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import StatusBadge from '../../components/vet/StatusBadge';
 
 const MedicalHistory = () => {
@@ -8,7 +8,6 @@ const MedicalHistory = () => {
   const navigate = useNavigate();
 
   const [animal, setAnimal] = useState(null);
-  const [health, setHealth] = useState(null);
   const [logs, setLogs] = useState([]);
   const [treatments, setTreatments] = useState([]);
   const [diagnoses, setDiagnoses] = useState([]);
@@ -33,7 +32,6 @@ const MedicalHistory = () => {
           const json = await res.json();
           if (json.success) {
             setAnimal(json.data.animal);
-            setHealth(json.data.health);
             setLogs(json.data.logs || []);
             setTreatments(json.data.treatments || []);
             setDiagnoses(json.data.diagnoses || []);
@@ -53,7 +51,6 @@ const MedicalHistory = () => {
               const historyJson = await historyRes.json();
               if (historyJson.success) {
                 setAnimal(historyJson.data.animal);
-                setHealth(historyJson.data.health);
                 setLogs(historyJson.data.logs || []);
                 setTreatments(historyJson.data.treatments || []);
                 setDiagnoses(historyJson.data.diagnoses || []);
@@ -78,7 +75,6 @@ const MedicalHistory = () => {
       const json = await res.json();
       if (json.success) {
         setAnimal(json.data.animal);
-        setHealth(json.data.health);
         setLogs(json.data.logs || []);
         setTreatments(json.data.treatments || []);
         setDiagnoses(json.data.diagnoses || []);

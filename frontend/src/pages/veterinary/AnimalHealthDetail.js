@@ -93,7 +93,7 @@ const AnimalHealthDetail = () => {
           <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-dark)' }}>Health Timeline</h3>
-              <a href="#" style={{ color: 'var(--primary-green)', fontSize: '13px', fontWeight: '500', textDecoration: 'none' }}>View History</a>
+              <button type="button" onClick={() => navigate(`/vet/medical-history/${animal.id}`)} style={{ color: 'var(--primary-green)', background: 'none', border: 'none', padding: 0, fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>View History</button>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
