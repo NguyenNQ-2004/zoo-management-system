@@ -13,11 +13,56 @@ const ZooService = require('./src/models/ZooService');
 const connectDB = require('./src/config/db');
 
 const demoUsers = [
-  { email: 'user@zoo.com', password: '123456', role: 'USER' },
-  { email: 'staff@zoo.com', password: '123456', role: 'STAFF' },
-  { email: 'staff2@zoo.com', password: '123456', role: 'STAFF' },
-  { email: 'vet@zoo.com', password: '123456', role: 'VET' },
-  { email: 'admin@zoo.com', password: '123456', role: 'ADMIN' },
+  {
+    fullName: 'Vo Customer',
+    email: 'user@zoo.com',
+    password: '123456',
+    role: 'USER',
+    phone: '0905999222',
+    assignedArea: 'Visitor',
+    status: 'ACTIVE',
+    lastActiveAt: new Date('2026-07-15T10:30:00'),
+  },
+  {
+    fullName: 'Tran Minh Staff',
+    email: 'staff@zoo.com',
+    password: '123456',
+    role: 'STAFF',
+    phone: '0902111888',
+    assignedArea: 'Savannah Zone',
+    status: 'ACTIVE',
+    lastActiveAt: new Date('2026-07-15T12:20:00'),
+  },
+  {
+    fullName: 'Le Hoang Staff',
+    email: 'staff2@zoo.com',
+    password: '123456',
+    role: 'STAFF',
+    phone: '0903333777',
+    assignedArea: 'Reptile House',
+    status: 'ACTIVE',
+    lastActiveAt: new Date('2026-07-15T11:00:00'),
+  },
+  {
+    fullName: 'Pham Vet',
+    email: 'vet@zoo.com',
+    password: '123456',
+    role: 'VET',
+    phone: '0904555666',
+    assignedArea: 'Aquatic World',
+    status: 'ACTIVE',
+    lastActiveAt: new Date('2026-07-15T13:30:00'),
+  },
+  {
+    fullName: 'Nguyen Admin',
+    email: 'admin@zoo.com',
+    password: '123456',
+    role: 'ADMIN',
+    phone: '0901223456',
+    assignedArea: 'System',
+    status: 'ACTIVE',
+    lastActiveAt: new Date('2026-07-15T14:00:00'),
+  },
 ];
 
 async function seedDatabase() {
