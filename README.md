@@ -67,4 +67,4 @@ src/
 2. **Giao diện tạm**: Hiện tại các trang đang dùng `PlaceholderPage`. Anh em cứ tạo component mới thay thế vào file Dashboard của mình để phát triển giao diện thật.
 3. **Màu sắc**: Màu chủ đạo của UI hiện tại là xanh lá cây rừng (`#1B5E3C`), nền trắng. Có thể bổ sung thêm CSS ở `src/index.css` hoặc dùng module CSS tùy ý.
 
-Chúc AE code thuận lợi! 🚀
+Chúc AE code thuận lợi! 🚀.
