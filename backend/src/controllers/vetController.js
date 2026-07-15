@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const Animal = require('../models/Animal');
 const AnimalHealth = require('../models/AnimalHealth');
 const MedicalLog = require('../models/MedicalLog');
+const Treatment = require('../models/Treatment');
 
 // Get dashboard stats (For Task 46)
 exports.getDashboardStats = async (req, res) => {
@@ -82,7 +84,8 @@ exports.getAnimalHealthStatus = async (req, res) => {
           : animal.status;
 
       return {
-        id: animal.code,
+        id: animal._id,
+        code: animal.code,
         name: animal.name,
         species: animal.species,
         area: animal.area ? animal.area.name : 'Unknown',
@@ -163,6 +166,8 @@ exports.getHealthRecordsArchive = async (req, res) => {
     }
 
     const formattedLogs = logs.map((log) => ({
+      id: log._id,
+      animalId: log.animal?._id,
       ref: log.diagnosis ? log.diagnosis.substring(0, 10).toUpperCase() : `#REC-${Math.floor(Math.random() * 10000)}`,
       subject: `${log.animal?.name || 'Unknown'} (${log.animal?.code || 'N/A'})`,
       type: log.treatmentPlan || 'Checkup',
@@ -193,6 +198,210 @@ exports.getHealthRecordsArchive = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching health records:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// GET /animals/:id/health (Task 49)
+exports.getAnimalHealthDetail = async (req, res) => {
+  try {
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query._id = req.params.id;
+    } else {
+      query.code = req.params.id;
+    }
+    const animal = await Animal.findOne(query).populate('area').lean();
+    if (!animal) return res.status(404).json({ success: false, message: 'Animal not found' });
+
+    let health = await AnimalHealth.findOne({ animal: animal._id }).lean();
+    if (!health) {
+      health = { weightKg: 0, temperatureC: 0, appetite: 'NORMAL', condition: 'STABLE', notes: '' };
+    }
+
+    const logs = await MedicalLog.find({ animal: animal._id }).sort({ date: -1 }).lean();
+    const treatments = await Treatment.find({ animal: animal._id }).sort({ startDate: -1 }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        animal: {
+          id: animal._id,
+          code: animal.code,
+          name: animal.name,
+          species: animal.species,
+          area: animal.area ? animal.area.name : 'Unknown',
+          status: animal.status,
+          image: `https://ui-avatars.com/api/?name=${animal.name}&background=random`
+        },
+        health,
+        logs,
+        treatments
+      }
+    });
+  } catch (error) {
+    console.error('Error in getAnimalHealthDetail:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// PUT /animals/:id/health-status (Task 50)
+exports.updateAnimalHealthStatus = async (req, res) => {
+  try {
+    const { condition, weightKg, temperatureC, appetite, notes } = req.body;
+    
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query._id = req.params.id;
+    } else {
+      query.code = req.params.id;
+    }
+    const animal = await Animal.findOne(query);
+    if (!animal) return res.status(404).json({ success: false, message: 'Animal not found' });
+
+    // Find or create AnimalHealth
+    let health = await AnimalHealth.findOne({ animal: animal._id });
+    if (!health) {
+      health = new AnimalHealth({ animal: animal._id });
+    }
+    
+    if (weightKg !== undefined) health.weightKg = weightKg;
+    if (temperatureC !== undefined) health.temperatureC = temperatureC;
+    if (appetite !== undefined) health.appetite = appetite;
+    if (condition !== undefined) health.condition = condition;
+    if (notes !== undefined) health.notes = notes;
+    health.lastCheckDate = new Date();
+    health.checkedBy = req.user ? req.user.id : null; 
+    await health.save();
+
+    let animalStatus = 'HEALTHY';
+    if (condition === 'MONITORING') animalStatus = 'OBSERVATION';
+    if (condition === 'CRITICAL') animalStatus = 'TREATMENT';
+    await Animal.findByIdAndUpdate(animal._id, { status: animalStatus });
+
+    res.status(200).json({ success: true, data: health, message: 'Health status updated' });
+  } catch (error) {
+    console.error('Error updating health status:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// POST /animals/:id/medical-logs (Task 51)
+exports.createMedicalLog = async (req, res) => {
+  try {
+    const { diagnosis, symptoms, treatmentPlan, notes, type, status } = req.body;
+    
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query._id = req.params.id;
+    } else {
+      query.code = req.params.id;
+    }
+    const animal = await Animal.findOne(query);
+    if (!animal) return res.status(404).json({ success: false, message: 'Animal not found' });
+
+    const newLog = new MedicalLog({
+      animal: animal._id,
+      vet: req.user ? req.user.id : null,
+      diagnosis,
+      symptoms,
+      treatmentPlan,
+      notes,
+      type: type || 'CHECKUP',
+      status: status || 'COMPLETED',
+      date: new Date()
+    });
+
+    await newLog.save();
+    res.status(201).json({ success: true, data: newLog, message: 'Medical log created' });
+  } catch (error) {
+    console.error('Error creating medical log:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// POST /animals/:id/treatments (Task 52)
+exports.createTreatmentPlan = async (req, res) => {
+  try {
+    const { title, medication, dosage, schedule, startDate, endDate, medicalLogId } = req.body;
+    
+    let query = {};
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query._id = req.params.id;
+    } else {
+      query.code = req.params.id;
+    }
+    const animal = await Animal.findOne(query);
+    if (!animal) return res.status(404).json({ success: false, message: 'Animal not found' });
+
+    const treatment = new Treatment({
+      animal: animal._id,
+      vet: req.user ? req.user.id : null,
+      medicalLog: medicalLogId || null,
+      title,
+      medication,
+      dosage,
+      schedule,
+      startDate: startDate || new Date(),
+      endDate,
+      status: 'PLANNED'
+    });
+
+    await treatment.save();
+    res.status(201).json({ success: true, data: treatment, message: 'Treatment plan created' });
+  } catch (error) {
+    console.error('Error creating treatment plan:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// PUT /treatments/:id/status (Task 53)
+exports.updateTreatmentStatus = async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    
+    const treatment = await Treatment.findById(req.params.id);
+    if (!treatment) return res.status(404).json({ success: false, message: 'Treatment not found' });
+
+    treatment.status = status;
+    await treatment.save();
+
+    res.status(200).json({ success: true, data: treatment, message: 'Treatment status updated' });
+  } catch (error) {
+    console.error('Error updating treatment status:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// GET /treatments (List Treatment Plans)
+exports.getAllTreatments = async (req, res) => {
+  try {
+    const treatments = await Treatment.find()
+      .populate('animal')
+      .populate('vet')
+      .sort({ startDate: -1 })
+      .lean();
+
+    res.status(200).json({ success: true, data: treatments });
+  } catch (error) {
+    console.error('Error fetching treatments:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// GET /treatments/:id (Treatment Detail)
+exports.getTreatmentDetail = async (req, res) => {
+  try {
+    const treatment = await Treatment.findById(req.params.id)
+      .populate('animal')
+      .populate('vet')
+      .lean();
+
+    if (!treatment) return res.status(404).json({ success: false, message: 'Treatment not found' });
+
+    res.status(200).json({ success: true, data: treatment });
+  } catch (error) {
+    console.error('Error fetching treatment detail:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

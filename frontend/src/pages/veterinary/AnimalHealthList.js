@@ -14,6 +14,10 @@ const AnimalHealthList = () => {
   const [availableAreas, setAvailableAreas] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     const fetchAnimals = async () => {
       setLoading(true);
@@ -167,16 +171,20 @@ const AnimalHealthList = () => {
               <tr><td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-gray)' }}>Loading data...</td></tr>
             ) : (
               <>
-                {animals.map((animal, idx) => (
-                  <tr key={animal.id} style={{ borderBottom: idx === animals.length - 1 ? 'none' : '1px solid #f3f4f6' }}>
+                {animals.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((animal, idx) => (
+                  <tr 
+                    key={animal.id} 
+                    onClick={() => navigate(`/vet/health/${animal.id}`)}
+                    style={{ borderBottom: idx === animals.length - 1 ? 'none' : '1px solid #f3f4f6', cursor: 'pointer' }}
+                  >
                     <td style={{ padding: '16px 24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          <img src={animal.image} alt={animal.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           <img src={animal.image} alt={animal.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <div>
                           <div style={{ fontWeight: '600', color: 'var(--text-dark)' }}>{animal.name}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--text-gray)' }}>{animal.id}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-gray)' }}>{animal.code}</div>
                         </div>
                       </div>
                     </td>
@@ -184,12 +192,18 @@ const AnimalHealthList = () => {
                     <td style={{ padding: '16px 24px', color: 'var(--text-gray)' }}>{animal.area}</td>
                     <td style={{ padding: '16px 24px' }}><StatusBadge status={animal.status} /></td>
                     <td style={{ padding: '16px 24px', color: 'var(--text-gray)' }}>{animal.lastCheck}</td>
-                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                    <td style={{ padding: '16px 24px', textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-gray)', padding: '4px' }}>
+                        <button 
+                          onClick={() => navigate(`/vet/health/${animal.id}/update`)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-gray)', padding: '4px' }}
+                        >
                           <Edit size={18} />
                         </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-green)', padding: '4px' }}>
+                        <button 
+                          onClick={() => navigate(`/vet/health/${animal.id}`)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-green)', padding: '4px' }}
+                        >
                           <Eye size={18} />
                         </button>
                       </div>
@@ -210,15 +224,41 @@ const AnimalHealthList = () => {
         </table>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e5e7eb', backgroundColor: 'white' }}>
-          <span style={{ fontSize: '13px', color: 'var(--text-gray)' }}>Showing 1 to {Math.min(10, animals.length)} of {animals.length} animals</span>
+          <span style={{ fontSize: '13px', color: 'var(--text-gray)' }}>
+            Showing {animals.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to {Math.min(currentPage * itemsPerPage, animals.length)} of {animals.length} animals
+          </span>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <button style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-gray)', cursor: 'pointer' }}>{'<'}</button>
-            <button style={{ padding: '6px 12px', backgroundColor: 'var(--primary-green)', border: '1px solid var(--primary-green)', borderRadius: '6px', color: 'white', cursor: 'pointer', fontWeight: '500' }}>1</button>
-            <button style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-dark)', cursor: 'pointer', fontWeight: '500' }}>2</button>
-            <button style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-dark)', cursor: 'pointer', fontWeight: '500' }}>3</button>
-            <span style={{ padding: '6px 4px', color: 'var(--text-gray)' }}>...</span>
-            <button style={{ padding: '6px 12px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-dark)', cursor: 'pointer', fontWeight: '500' }}>69</button>
-            <button style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-gray)', cursor: 'pointer' }}>{'>'}</button>
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-gray)', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}
+            >
+              {'<'}
+            </button>
+            {Array.from({ length: Math.ceil(animals.length / itemsPerPage) || 1 }, (_, i) => i + 1).map((page) => (
+              <button 
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                style={{ 
+                  padding: '6px 12px', 
+                  backgroundColor: currentPage === page ? 'var(--primary-green)' : 'white', 
+                  border: currentPage === page ? '1px solid var(--primary-green)' : '1px solid #e5e7eb', 
+                  borderRadius: '6px', 
+                  color: currentPage === page ? 'white' : 'var(--text-dark)', 
+                  cursor: 'pointer', 
+                  fontWeight: '500' 
+                }}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              disabled={currentPage === Math.ceil(animals.length / itemsPerPage) || Math.ceil(animals.length / itemsPerPage) === 0}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(animals.length / itemsPerPage)))}
+              style={{ padding: '6px 10px', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', color: 'var(--text-gray)', cursor: (currentPage === Math.ceil(animals.length / itemsPerPage) || Math.ceil(animals.length / itemsPerPage) === 0) ? 'not-allowed' : 'pointer', opacity: (currentPage === Math.ceil(animals.length / itemsPerPage) || Math.ceil(animals.length / itemsPerPage) === 0) ? 0.5 : 1 }}
+            >
+              {'>'}
+            </button>
           </div>
         </div>
       </div>

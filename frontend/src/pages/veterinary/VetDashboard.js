@@ -43,8 +43,8 @@ const VetDashboard = () => {
     const loadDashboard = async () => {
       try {
         const [dashboardRes, recordsRes] = await Promise.all([
-          fetch('http://localhost:5001/api/vet/dashboard'),
-          fetch('http://localhost:5001/api/vet/health-records?limit=3')
+          fetch('http://localhost:5000/api/vet/dashboard'),
+          fetch('http://localhost:5000/api/vet/health-records?limit=3')
         ]);
 
         if (!mounted) return;

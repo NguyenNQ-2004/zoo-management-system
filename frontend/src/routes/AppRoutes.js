@@ -15,6 +15,13 @@ import StaffDashboard from '../pages/staff/StaffDashboard';
 import VetDashboard from '../pages/veterinary/VetDashboard';
 import AnimalHealthList from '../pages/veterinary/AnimalHealthList';
 import HealthRecordsArchive from '../pages/veterinary/HealthRecordsArchive';
+import AnimalHealthDetail from '../pages/veterinary/AnimalHealthDetail';
+import UpdateHealthStatus from '../pages/veterinary/UpdateHealthStatus';
+import MedicalLogList from '../pages/veterinary/MedicalLogList';
+import MedicalLogEntry from '../pages/veterinary/MedicalLogEntry';
+import TreatmentPlanList from '../pages/veterinary/TreatmentPlanList';
+import TreatmentPlanForm from '../pages/veterinary/TreatmentPlanForm';
+import TreatmentDetail from '../pages/veterinary/TreatmentDetail';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import PlaceholderPage from '../components/PlaceholderPage';
 
@@ -46,6 +53,17 @@ const AppRoutes = () => {
           <Route index element={<VetDashboard />} />
           <Route path="health" element={<AnimalHealthList />} />
           <Route path="archive" element={<HealthRecordsArchive />} />
+          
+          <Route path="health/:id" element={<AnimalHealthDetail />} />
+          <Route path="health/:id/update" element={<UpdateHealthStatus />} />
+          
+          <Route path="medical-logs" element={<MedicalLogList />} />
+          <Route path="health/:id/medical-logs/new" element={<MedicalLogEntry />} />
+          
+          <Route path="treatments" element={<TreatmentPlanList />} />
+          <Route path="health/:id/treatments/new" element={<TreatmentPlanForm />} />
+          <Route path="treatments/:id" element={<TreatmentDetail />} />
+
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Veterinary" functions={[]} />} />
         </Route>
 
