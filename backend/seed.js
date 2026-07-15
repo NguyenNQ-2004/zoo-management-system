@@ -13,11 +13,11 @@ const ZooService = require('./src/models/ZooService');
 const connectDB = require('./src/config/db');
 
 const demoUsers = [
-  { email: 'user@zoo.com', password: '123456', role: 'USER' },
-  { email: 'staff@zoo.com', password: '123456', role: 'STAFF' },
-  { email: 'staff2@zoo.com', password: '123456', role: 'STAFF' },
-  { email: 'vet@zoo.com', password: '123456', role: 'VET' },
-  { email: 'admin@zoo.com', password: '123456', role: 'ADMIN' },
+  { email: 'user@zoo.com', fullName: 'Demo User', password: '123456', role: 'USER' },
+  { email: 'staff@zoo.com', fullName: 'Demo Staff', password: '123456', role: 'STAFF' },
+  { email: 'staff2@zoo.com', fullName: 'Demo Staff Two', password: '123456', role: 'STAFF' },
+  { email: 'vet@zoo.com', fullName: 'Dr. Demo Vet', password: '123456', role: 'VET' },
+  { email: 'admin@zoo.com', fullName: 'Demo Admin', password: '123456', role: 'ADMIN' },
 ];
 
 async function seedDatabase() {
@@ -46,12 +46,8 @@ async function seedDatabase() {
       await user.save();
       createdUsers[userData.email] = user;
     }
-<<<<<<< HEAD
-
     console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
-    console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
-=======
->>>>>>> 5f02b195949009248de799212995fab0262a08dc
+    console.table(demoUsers.map((u) => ({ Email: u.email, Role: u.role })));
 
     const areas = await ZooArea.insertMany([
       {

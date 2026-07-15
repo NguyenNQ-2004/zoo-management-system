@@ -13,6 +13,8 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import VetDashboard from '../pages/veterinary/VetDashboard';
+import AnimalHealthList from '../pages/veterinary/AnimalHealthList';
+import HealthRecordsArchive from '../pages/veterinary/HealthRecordsArchive';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import PlaceholderPage from '../components/PlaceholderPage';
 
@@ -42,6 +44,8 @@ const AppRoutes = () => {
         {/* Vet Routes */}
         <Route path="/vet" element={<RoleRoute allowedRole="VET"><VetLayout /></RoleRoute>}>
           <Route index element={<VetDashboard />} />
+          <Route path="health" element={<AnimalHealthList />} />
+          <Route path="archive" element={<HealthRecordsArchive />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Veterinary" functions={[]} />} />
         </Route>
 

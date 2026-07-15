@@ -1,19 +1,19 @@
-import React from 'react';
-import { 
-  HeartPulse, 
-  AlertTriangle, 
-  Calendar, 
+import React, { useEffect, useState } from 'react';
+import {
+  HeartPulse,
+  AlertTriangle,
+  Calendar,
   Activity,
   Download,
   Plus
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -21,7 +21,7 @@ import {
 } from 'recharts';
 import StatCard from '../../components/vet/StatCard';
 
-const mockHealthTrends = [
+const defaultHealthTrends = [
   { name: 'Mon', healthy: 320, treatment: 15 },
   { name: 'Tue', healthy: 325, treatment: 12 },
   { name: 'Wed', healthy: 322, treatment: 14 },
@@ -31,16 +31,85 @@ const mockHealthTrends = [
   { name: 'Sun', healthy: 342, treatment: 15 },
 ];
 
-const mockComplianceData = [
-  { name: 'Completed', value: 75, color: '#065F46' },
-  { name: 'In Progress', value: 15, color: '#34D399' },
-  { name: 'Pending', value: 10, color: '#E5E7EB' },
-];
-
 const VetDashboard = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [healthRecords, setHealthRecords] = useState({ cards: [], logs: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboard = async () => {
+      try {
+        const [dashboardRes, recordsRes] = await Promise.all([
+          fetch('http://localhost:5001/api/vet/dashboard'),
+          fetch('http://localhost:5001/api/vet/health-records?limit=3')
+        ]);
+
+        if (!mounted) return;
+
+        const dashboardData = await dashboardRes.json();
+        const recordsData = await recordsRes.json();
+
+        setDashboardData(dashboardData.data || dashboardData);
+        setHealthRecords(recordsData.data || recordsData);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err.message || 'Unable to load veterinary dashboard data.');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats = dashboardData?.stats || {
+    total: 0,
+    healthy: 0,
+    monitoring: 0,
+    treatment: 0,
+    critical: 0
+  };
+
+  const trends = dashboardData?.trends || defaultHealthTrends;
+  const watchlist = dashboardData?.watchlist || [];
+  const recentRecords = healthRecords?.cards || [];
+
+  const complianceData = [
+    {
+      name: 'Completed',
+      value: Math.max(1, Math.round((stats.healthy / Math.max(stats.total, 1)) * 100)),
+      color: '#065F46'
+    },
+    {
+      name: 'Monitoring',
+      value: Math.max(1, Math.round((stats.monitoring / Math.max(stats.total, 1)) * 100)),
+      color: '#34D399'
+    },
+    {
+      name: 'Treatment',
+      value: Math.max(1, Math.round((stats.treatment / Math.max(stats.total, 1)) * 100)),
+      color: '#E5E7EB'
+    }
+  ];
+
+  if (loading) {
+    return <div style={{ padding: '24px' }}>Loading veterinary dashboard...</div>;
+  }
+
+  if (error) {
+    return <div style={{ padding: '24px', color: '#b91c1c' }}>{error}</div>;
+  }
+
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0', color: 'var(--text-dark)' }}>
@@ -51,16 +120,16 @@ const VetDashboard = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', 
-            padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e5e7eb', 
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '8px 16px', backgroundColor: 'white', border: '1px solid #e5e7eb',
             borderRadius: '8px', cursor: 'pointer', fontWeight: '500', color: 'var(--text-dark)'
           }}>
             <Download size={18} /> Export PDF
           </button>
-          <button style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', 
-            padding: '8px 16px', backgroundColor: 'var(--primary-green)', border: 'none', 
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '8px 16px', backgroundColor: 'var(--primary-green)', border: 'none',
             borderRadius: '8px', cursor: 'pointer', fontWeight: '500', color: 'white'
           }}>
             <Plus size={18} /> Log Checkup
@@ -68,53 +137,47 @@ const VetDashboard = () => {
         </div>
       </div>
 
-      {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
-        <StatCard 
-          title="HEALTHY ANIMALS" 
-          value="1,248" 
-          icon={<HeartPulse size={20} />} 
-          trend="+2%" 
+        <StatCard
+          title="HEALTHY ANIMALS"
+          value={stats.healthy.toString()}
+          icon={<HeartPulse size={20} />}
+          trend="+2%"
           trendUp={true}
-          bgColor="var(--status-healthy-bg)" 
+          bgColor="var(--status-healthy-bg)"
           textColor="var(--status-healthy-text)"
           borderColor="var(--status-healthy-text)"
         />
-        <StatCard 
-          title="MONITORING" 
-          value="42" 
-          icon={<Activity size={20} />} 
-          bgColor="var(--status-monitoring-bg)" 
+        <StatCard
+          title="MONITORING"
+          value={stats.monitoring.toString()}
+          icon={<Activity size={20} />}
+          bgColor="var(--status-monitoring-bg)"
           textColor="var(--status-monitoring-text)"
           borderColor="var(--status-monitoring-text)"
         />
-        <StatCard 
-          title="NEEDS ATTENTION" 
-          value="08" 
-          icon={<AlertTriangle size={20} />} 
+        <StatCard
+          title="NEEDS ATTENTION"
+          value={stats.critical.toString()}
+          icon={<AlertTriangle size={20} />}
           subtitle="Urgent"
-          bgColor="var(--status-urgent-bg)" 
+          bgColor="var(--status-urgent-bg)"
           textColor="var(--status-urgent-text)"
           borderColor="var(--status-urgent-text)"
         />
-        <StatCard 
-          title="UNDER TREATMENT" 
-          value="15" 
-          icon={<Calendar size={20} />} 
+        <StatCard
+          title="UNDER TREATMENT"
+          value={stats.treatment.toString()}
+          icon={<Calendar size={20} />}
           subtitle="Ongoing"
-          bgColor="var(--status-alert-bg)" 
+          bgColor="var(--status-alert-bg)"
           textColor="var(--status-alert-text)"
           borderColor="var(--status-alert-text)"
         />
       </div>
 
-      {/* Charts & Lists */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        
-        {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Chart */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-dark)' }}>Health Distribution by Species</h3>
@@ -125,7 +188,7 @@ const VetDashboard = () => {
             </div>
             <div style={{ height: '250px' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockHealthTrends}>
+                <BarChart data={trends}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
@@ -137,7 +200,6 @@ const VetDashboard = () => {
             </div>
           </div>
 
-          {/* Critical Care Watchlist */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-dark)' }}>Critical Care Watchlist</h3>
@@ -154,38 +216,43 @@ const VetDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td style={{ padding: '16px 0', fontWeight: '500' }}>Kovu</td>
-                  <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>African Lion</td>
-                  <td style={{ padding: '16px 0' }}><span style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>CRITICAL</span></td>
-                  <td style={{ padding: '16px 0' }}>Respiratory Infection</td>
-                  <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>2h ago</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '16px 0', fontWeight: '500' }}>Matilda</td>
-                  <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>Green Sea Turtle</td>
-                  <td style={{ padding: '16px 0' }}><span style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>CRITICAL</span></td>
-                  <td style={{ padding: '16px 0' }}>Shell Fracture</td>
-                  <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>4h ago</td>
-                </tr>
+                {watchlist.length > 0 ? watchlist.map((item) => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '16px 0', fontWeight: '500' }}>{item.name}</td>
+                    <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>{item.species}</td>
+                    <td style={{ padding: '16px 0' }}><span style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>{item.status}</span></td>
+                    <td style={{ padding: '16px 0' }}>{item.issue}</td>
+                    <td style={{ padding: '16px 0', color: 'var(--text-gray)' }}>{item.lastCheck}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan="5" style={{ padding: '16px 0', color: 'var(--text-gray)' }}>No critical cases found.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
+            {recentRecords.length > 0 && (
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #f3f4f6' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-dark)' }}>Recent Health Records</h4>
+                {recentRecords.map((record) => (
+                  <div key={record.id} style={{ fontSize: '13px', color: 'var(--text-gray)', marginBottom: '6px' }}>
+                    {record.name} — {record.procedure} ({record.date})
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
         </div>
 
-        {/* Right Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Treatment Compliance */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', color: 'var(--text-dark)' }}>Treatment Compliance</h3>
-            
+
             <div style={{ height: '200px', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockComplianceData}
+                    data={complianceData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -194,22 +261,20 @@ const VetDashboard = () => {
                     dataKey="value"
                     stroke="none"
                   >
-                    {mockComplianceData.map((entry, index) => (
+                    {complianceData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              {/* Center Text */}
               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-dark)' }}>90%</div>
                 <div style={{ fontSize: '10px', color: 'var(--text-gray)', textTransform: 'uppercase', letterSpacing: '1px' }}>Success</div>
               </div>
             </div>
 
-            {/* Legend */}
             <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {mockComplianceData.map((item, idx) => (
+              {complianceData.map((item, idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-gray)' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color }}></div>
@@ -221,13 +286,12 @@ const VetDashboard = () => {
             </div>
           </div>
 
-          {/* Today's Schedule */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-dark)' }}>Today's Schedule</h3>
               <Calendar size={18} color="var(--primary-green)" />
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-gray)', marginTop: '4px' }}>09:00</div>
@@ -251,11 +315,8 @@ const VetDashboard = () => {
               + Add Appointment
             </button>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };
