@@ -60,6 +60,7 @@ const sanitizeAnimal = (animal, health = null) => ({
   code: animal.code,
   name: animal.name,
   species: animal.species,
+  imageUrl: animal.imageUrl,
   scientificName: animal.scientificName,
   gender: animal.gender,
   dateOfBirth: animal.dateOfBirth,
@@ -579,6 +580,7 @@ const createAnimal = async (req, res) => {
       code,
       name,
       species,
+      imageUrl = '',
       scientificName = '',
       gender = 'UNKNOWN',
       dateOfBirth,
@@ -617,6 +619,7 @@ const createAnimal = async (req, res) => {
       code: code.toUpperCase().trim(),
       name: name.trim(),
       species: species.trim(),
+      imageUrl: imageUrl.trim(),
       scientificName: scientificName.trim(),
       gender,
       dateOfBirth: dateOfBirth || null,
@@ -671,6 +674,7 @@ const updateAnimal = async (req, res) => {
       code,
       name,
       species,
+      imageUrl,
       scientificName,
       gender,
       dateOfBirth,
@@ -696,6 +700,7 @@ const updateAnimal = async (req, res) => {
 
     if (name) animal.name = name.trim();
     if (species) animal.species = species.trim();
+    if (typeof imageUrl === 'string') animal.imageUrl = imageUrl.trim();
     if (typeof scientificName === 'string') animal.scientificName = scientificName.trim();
     if (gender) animal.gender = gender;
     if (Object.prototype.hasOwnProperty.call(req.body, 'dateOfBirth')) animal.dateOfBirth = dateOfBirth || null;

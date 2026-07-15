@@ -79,7 +79,7 @@ async function seedDatabase() {
       await user.save();
       createdUsers[userData.email] = user;
     }
-    console.log(`✅ Đã tạo thành công ${demoUsers.length} tài khoản Demo (Mật khẩu đều là: 123456)`);
+    console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
     console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
 
     // 1. Khởi tạo dữ liệu mẫu cho Zoo Area

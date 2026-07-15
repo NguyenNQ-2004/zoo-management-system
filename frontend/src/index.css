@@ -497,6 +497,23 @@ code {
   gap: 12px;
 }
 
+.admin-animal-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.admin-animal-thumb {
+  width: 64px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #eef4ef;
+  border: 1px solid var(--admin-border);
+  flex-shrink: 0;
+}
+
 .admin-avatar {
   width: 44px;
   height: 44px;
@@ -637,6 +654,22 @@ code {
   gap: 14px;
 }
 
+.admin-animal-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-animal-preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid var(--admin-border);
+  background: #eef4ef;
+}
+
 .admin-detail-item {
   display: flex;
   flex-direction: column;
@@ -654,6 +687,10 @@ code {
 
 .admin-field-full {
   grid-column: 1 / -1;
+}
+
+.admin-break-text {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 1100px) {
@@ -684,7 +721,8 @@ code {
   }
 
   .admin-details-grid,
-  .admin-form-grid {
+  .admin-form-grid,
+  .admin-animal-detail-layout {
     grid-template-columns: 1fr;
   }
 }
