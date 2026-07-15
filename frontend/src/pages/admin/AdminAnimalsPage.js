@@ -10,6 +10,7 @@ const emptyAnimalForm = {
   code: '',
   name: '',
   species: '',
+  imageUrl: '',
   scientificName: '',
   gender: 'UNKNOWN',
   dateOfBirth: '',
@@ -128,6 +129,7 @@ const AdminAnimalsPage = () => {
     code: animal.code || '',
     name: animal.name || '',
     species: animal.species || '',
+    imageUrl: animal.imageUrl || '',
     scientificName: animal.scientificName || '',
     gender: animal.gender || 'UNKNOWN',
     dateOfBirth: toDateInput(animal.dateOfBirth),
@@ -367,8 +369,17 @@ const AdminAnimalsPage = () => {
                 {filteredAnimals.map((animal) => (
                   <tr key={animal._id}>
                     <td>
-                      <strong>{animal.name}</strong>
-                      <span className="admin-table-subtext">{animal.code} | {animal.species}</span>
+                      <div className="admin-animal-cell">
+                        <img
+                          className="admin-animal-thumb"
+                          src={animal.imageUrl || 'https://loremflickr.com/160/120/zoo,animal?lock=999'}
+                          alt={animal.name}
+                        />
+                        <div>
+                          <strong>{animal.name}</strong>
+                          <span className="admin-table-subtext">{animal.code} | {animal.species}</span>
+                        </div>
+                      </div>
                     </td>
                     <td>{animal.area?.name || 'No area'}</td>
                     <td>{animal.caretaker?.fullName || 'Unassigned'}</td>
@@ -409,17 +420,25 @@ const AdminAnimalsPage = () => {
             </div>
 
             {modalMode === 'view' && selectedAnimal && (
-              <div className="admin-details-grid">
-                <div className="admin-detail-item"><span>Code</span><strong>{selectedAnimal.code}</strong></div>
-                <div className="admin-detail-item"><span>Species</span><strong>{selectedAnimal.species}</strong></div>
-                <div className="admin-detail-item"><span>Area</span><strong>{selectedAnimal.area?.name || 'No area'}</strong></div>
-                <div className="admin-detail-item"><span>Caretaker</span><strong>{selectedAnimal.caretaker?.fullName || 'Unassigned'}</strong></div>
-                <div className="admin-detail-item"><span>Status</span><strong>{selectedAnimal.status}</strong></div>
-                <div className="admin-detail-item"><span>Date of birth</span><strong>{formatDate(selectedAnimal.dateOfBirth)}</strong></div>
-                <div className="admin-detail-item"><span>Condition</span><strong>{selectedAnimal.health?.condition || 'N/A'}</strong></div>
-                <div className="admin-detail-item"><span>Weight</span><strong>{selectedAnimal.health?.weightKg ?? 0} kg</strong></div>
-                <div className="admin-detail-item"><span>Temperature</span><strong>{selectedAnimal.health?.temperatureC ?? 'N/A'} C</strong></div>
-                <div className="admin-detail-item"><span>Appetite</span><strong>{selectedAnimal.health?.appetite || 'N/A'}</strong></div>
+              <div className="admin-animal-detail-layout">
+                <img
+                  className="admin-animal-preview"
+                  src={selectedAnimal.imageUrl || 'https://loremflickr.com/900/620/zoo,animal?lock=999'}
+                  alt={selectedAnimal.name}
+                />
+                <div className="admin-details-grid">
+                  <div className="admin-detail-item"><span>Code</span><strong>{selectedAnimal.code}</strong></div>
+                  <div className="admin-detail-item"><span>Species</span><strong>{selectedAnimal.species}</strong></div>
+                  <div className="admin-detail-item"><span>Image URL</span><strong className="admin-break-text">{selectedAnimal.imageUrl || 'N/A'}</strong></div>
+                  <div className="admin-detail-item"><span>Area</span><strong>{selectedAnimal.area?.name || 'No area'}</strong></div>
+                  <div className="admin-detail-item"><span>Caretaker</span><strong>{selectedAnimal.caretaker?.fullName || 'Unassigned'}</strong></div>
+                  <div className="admin-detail-item"><span>Status</span><strong>{selectedAnimal.status}</strong></div>
+                  <div className="admin-detail-item"><span>Date of birth</span><strong>{formatDate(selectedAnimal.dateOfBirth)}</strong></div>
+                  <div className="admin-detail-item"><span>Condition</span><strong>{selectedAnimal.health?.condition || 'N/A'}</strong></div>
+                  <div className="admin-detail-item"><span>Weight</span><strong>{selectedAnimal.health?.weightKg ?? 0} kg</strong></div>
+                  <div className="admin-detail-item"><span>Temperature</span><strong>{selectedAnimal.health?.temperatureC ?? 'N/A'} C</strong></div>
+                  <div className="admin-detail-item"><span>Appetite</span><strong>{selectedAnimal.health?.appetite || 'N/A'}</strong></div>
+                </div>
               </div>
             )}
 
@@ -428,6 +447,7 @@ const AdminAnimalsPage = () => {
                 <label className="admin-field"><span>Code</span><input name="code" value={formData.code} onChange={handleFormChange} required /></label>
                 <label className="admin-field"><span>Name</span><input name="name" value={formData.name} onChange={handleFormChange} required /></label>
                 <label className="admin-field"><span>Species</span><input name="species" value={formData.species} onChange={handleFormChange} required /></label>
+                <label className="admin-field admin-field-full"><span>Image URL</span><input name="imageUrl" value={formData.imageUrl} onChange={handleFormChange} placeholder="https://loremflickr.com/900/620/lion,wildlife" /></label>
                 <label className="admin-field"><span>Scientific name</span><input name="scientificName" value={formData.scientificName} onChange={handleFormChange} /></label>
                 <label className="admin-field"><span>Gender</span><select name="gender" value={formData.gender} onChange={handleFormChange}>{genderOptions.map((gender) => <option key={gender} value={gender}>{gender}</option>)}</select></label>
                 <label className="admin-field"><span>Date of birth</span><input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleFormChange} /></label>

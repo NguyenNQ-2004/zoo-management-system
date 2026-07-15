@@ -91,12 +91,8 @@ async function seedDatabase() {
       await user.save();
       createdUsers[userData.email] = user;
     }
-<<<<<<< HEAD
-
     console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
     console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
-=======
->>>>>>> 5f02b195949009248de799212995fab0262a08dc
 
     const areas = await ZooArea.insertMany([
       {
@@ -138,6 +134,7 @@ async function seedDatabase() {
         code: 'ANI-LION-001',
         name: 'Leo',
         species: 'Lion',
+        imageUrl: 'https://loremflickr.com/900/620/lion,wildlife?lock=101',
         scientificName: 'Panthera leo',
         gender: 'MALE',
         dateOfBirth: new Date('2018-04-15'),
@@ -152,6 +149,7 @@ async function seedDatabase() {
         code: 'ANI-PENGUIN-001',
         name: 'Luna',
         species: 'Penguin',
+        imageUrl: 'https://loremflickr.com/900/620/penguin,wildlife?lock=102',
         scientificName: 'Spheniscus humboldti',
         gender: 'FEMALE',
         dateOfBirth: new Date('2020-09-03'),
@@ -166,6 +164,7 @@ async function seedDatabase() {
         code: 'ANI-PYTHON-001',
         name: 'Kaa',
         species: 'Python',
+        imageUrl: 'https://loremflickr.com/900/620/python,snake,wildlife?lock=103',
         scientificName: 'Python bivittatus',
         gender: 'UNKNOWN',
         dateOfBirth: new Date('2017-06-22'),

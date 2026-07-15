@@ -19,6 +19,11 @@ const animalSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     scientificName: {
       type: String,
       default: '',
