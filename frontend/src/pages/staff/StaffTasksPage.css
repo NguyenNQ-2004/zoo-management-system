@@ -53,6 +53,58 @@
   color: #b3261e;
 }
 
+.task-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.4fr) auto auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.task-filter-panel label {
+  display: grid;
+  gap: 8px;
+}
+
+.task-filter-panel label span {
+  color: #23352b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.task-filter-panel input,
+.task-filter-panel select {
+  min-height: 40px;
+  border: 1px solid #d6e1db;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fbfcfc;
+  color: #07110c;
+}
+
+.task-filter-panel button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  background: #005c38;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.task-filter-panel button.secondary {
+  border: 1px solid #cbd8d0;
+  background: #ffffff;
+  color: #005c38;
+}
+
 .staff-task-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -122,7 +174,7 @@
 
 .assigned-task-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(88px, 0.45fr) minmax(110px, 0.55fr);
+  grid-template-columns: minmax(220px, 1.5fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(88px, 0.45fr) minmax(132px, 0.65fr) minmax(74px, 0.35fr);
   gap: 16px;
   align-items: center;
   min-height: 72px;
@@ -202,6 +254,38 @@
   background: #005c38;
 }
 
+.task-status-select {
+  min-height: 32px;
+  width: 124px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.task-status-select.status-pending {
+  color: #536159;
+  background: #e6ebe8;
+}
+
+.task-status-select.status-in-progress {
+  color: #8a4b00;
+  background: #ffe5b4;
+}
+
+.task-status-select.status-completed {
+  color: #ffffff;
+  background: #005c38;
+}
+
+.task-row-link {
+  color: #005c38;
+  font-weight: 900;
+  text-decoration: none;
+}
+
 .assigned-task-empty {
   min-height: 72px;
   display: flex;
@@ -221,7 +305,7 @@
   }
 
   .assigned-task-row {
-    min-width: 920px;
+    min-width: 1040px;
   }
 }
 
@@ -240,6 +324,10 @@
   }
 
   .staff-task-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-filter-panel {
     grid-template-columns: 1fr;
   }
 }

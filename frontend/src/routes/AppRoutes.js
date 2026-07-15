@@ -11,8 +11,12 @@ import AdminLayout from '../layouts/AdminLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
+import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
+import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
+import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
+import StaffTaskDetailPage from '../pages/staff/StaffTaskDetailPage';
 import StaffTasksPage from '../pages/staff/StaffTasksPage';
 import VetDashboard from '../pages/veterinary/VetDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -38,9 +42,12 @@ const AppRoutes = () => {
         {/* Staff Routes */}
         <Route path="/staff" element={<RoleRoute allowedRole="STAFF"><StaffLayout /></RoleRoute>}>
           <Route index element={<StaffDashboard />} />
-          <Route path="tasks" element={<StaffTasksPage />} />
-          <Route path="veterinary" element={<StaffCareDetail />} />
+          <Route path="animals" element={<StaffAnimalsPage />} />
           <Route path="animals/:animalId/care" element={<StaffCareDetail />} />
+          <Route path="animals/:animalId/care-logs" element={<StaffCareHistoryPage />} />
+          <Route path="animals/:animalId/care-logs/new" element={<StaffCareLogFormPage />} />
+          <Route path="tasks" element={<StaffTasksPage />} />
+          <Route path="tasks/:taskId" element={<StaffTaskDetailPage />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Staff" functions={[]} />} />
         </Route>
 

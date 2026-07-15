@@ -1,0 +1,149 @@
+.care-log-form-page {
+  min-height: 100vh;
+  padding: 36px 38px 48px;
+  background: #f5f7f6;
+  color: #07110c;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.care-log-form-header {
+  margin-bottom: 28px;
+}
+
+.care-log-form-header nav,
+.care-log-form-header nav a {
+  color: #005c38;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.care-log-form-header h1 {
+  margin: 12px 0 8px;
+  color: #07110c;
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.care-log-form-header p {
+  margin: 0;
+  color: #293b31;
+}
+
+.care-form-message,
+.care-form-panel {
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(8, 19, 14, 0.04);
+}
+
+.care-form-message {
+  margin-bottom: 24px;
+  padding: 14px 16px;
+}
+
+.care-form-message.error {
+  border: 1px solid #ffd4cd;
+  background: #fff7f5;
+  color: #b3261e;
+}
+
+.care-log-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.7fr);
+  gap: 24px;
+}
+
+.care-form-panel {
+  padding: 24px;
+}
+
+.notes-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.care-form-panel h2 {
+  margin: 0 0 18px;
+  color: #07110c;
+  font-size: 22px;
+}
+
+.care-form-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.care-form-fields.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.care-form-panel label {
+  display: grid;
+  gap: 8px;
+}
+
+.care-form-panel label span {
+  color: #23352b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.care-form-panel input,
+.care-form-panel select,
+.care-form-panel textarea {
+  border: 1px solid #d6e1db;
+  border-radius: 8px;
+  background: #fbfcfc;
+  color: #07110c;
+  font: inherit;
+}
+
+.care-form-panel input,
+.care-form-panel select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.care-form-panel textarea {
+  min-height: 190px;
+  resize: vertical;
+  padding: 12px;
+}
+
+.care-form-panel button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 8px;
+  background: #005c38;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.care-form-panel button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .care-log-form-grid,
+  .care-form-fields.two {
+    grid-template-columns: 1fr;
+  }
+
+  .notes-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .care-log-form-page {
+    padding: 26px 22px 40px;
+  }
+}

@@ -75,23 +75,8 @@
   box-shadow: inset 4px 0 0 #9ff3bf;
 }
 
-.staff-new-report {
-  min-height: 48px;
-  margin-top: auto;
-  border: 0;
-  border-radius: 8px;
-  background: #9ef6bd;
-  color: #075a35;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.staff-new-report span {
-  margin-right: 8px;
-}
-
 .staff-sidebar-footer {
-  margin-top: 28px;
+  margin-top: auto;
   padding-top: 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
@@ -160,7 +145,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .staff-new-report,
   .staff-sidebar-footer {
     margin-top: 18px;
   }

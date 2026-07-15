@@ -1,69 +1,22 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { api } from '../../services/api';
 import './StaffCareDetail.css';
 
-const animal = {
-  name: 'Kael',
-  species: 'Panthera pardus orientalis',
-  identifier: 'AL-0492',
-  age: '6 Years, 2 Mos',
-  weight: '48.5 kg',
-  sex: 'Male (Intact)',
-  enclosure: 'North Ridge B',
-  image: 'https://images.unsplash.com/photo-1615963244664-5b845b2025ee?auto=format&fit=crop&w=720&q=80'
+const statusOptions = [
+  { value: 'HEALTHY', label: 'Healthy' },
+  { value: 'OBSERVATION', label: 'Observation' },
+  { value: 'TREATMENT', label: 'Treatment' },
+];
+
+const formatDate = (value) => {
+  if (!value) return 'No date';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value));
 };
-
-const vitals = [
-  { label: 'Heart Rate', value: '72 bpm', level: 66 },
-  { label: 'Respiration', value: '24 br/m', level: 45 },
-  { label: 'Temperature', value: '38.2 C', level: 54 }
-];
-
-const checklist = [
-  {
-    title: 'Morning Feeding',
-    note: '2.5kg raw beef blend + Vitamin supplements.',
-    time: '08:30 AM',
-    status: 'done'
-  },
-  {
-    title: 'Enclosure Cleaning',
-    note: 'Standard structural check and waste removal. North Ridge B.',
-    status: 'pending'
-  },
-  {
-    title: 'Water Refresh',
-    note: 'Both primary and secondary troughs cleaned and refilled.',
-    time: '09:15 AM',
-    status: 'done'
-  },
-  {
-    title: 'Behavioral Observation',
-    note: 'Requires 15-minute focused observation regarding slight limp noted yesterday.',
-    action: 'Start',
-    status: 'attention'
-  }
-];
-
-const logs = [
-  {
-    datetime: 'Oct 23, 16:45',
-    type: 'Feeding',
-    icon: 'cutlery',
-    notes: 'Ate full portion. Active pacing before meal.'
-  },
-  {
-    datetime: 'Oct 23, 14:10',
-    type: 'Observation',
-    icon: 'eye',
-    notes: 'Slight favoring of left hind leg observed ...'
-  },
-  {
-    datetime: 'Oct 23, 08:30',
-    type: 'Cleaning',
-    icon: 'cleaning',
-    notes: 'Routine cleaning. No abnormalities in wa...'
-  }
-];
 
 const StaffTopbar = () => (
   <header className="care-topbar">
@@ -73,25 +26,101 @@ const StaffTopbar = () => (
     </label>
     <div className="care-actions">
       <button type="button" aria-label="Notifications">!</button>
-      <button type="button" aria-label="Settings">*</button>
       <div className="care-avatar" aria-label="Staff profile" />
     </div>
   </header>
 );
 
-const StatusIcon = ({ status }) => {
-  if (status === 'done') {
+const StatusIcon = ({ status, disabled, onClick }) => {
+  if (status === 'completed') {
     return <span className="checklist-icon done" />;
   }
 
-  if (status === 'attention') {
-    return <span className="checklist-icon attention">!</span>;
-  }
-
-  return <span className="checklist-icon pending" />;
+  return (
+    <button
+      type="button"
+      className="checklist-icon pending"
+      disabled={disabled}
+      onClick={onClick}
+      aria-label="Mark checklist item completed"
+    />
+  );
 };
 
 const StaffCareDetail = () => {
+  const { animalId } = useParams();
+  const location = useLocation();
+  const [careData, setCareData] = useState(null);
+  const [status, setStatus] = useState('');
+  const [statusNotes, setStatusNotes] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [updatingCareType, setUpdatingCareType] = useState('');
+  const [error, setError] = useState('');
+
+  const loadCare = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await api.getAnimalCare(animalId);
+      setCareData(data);
+      setStatus(data.animal?.status || '');
+    } catch (err) {
+      setError(err.message || 'Failed to load care detail');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCare();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animalId, location.state?.refreshCareDetailAt]);
+
+  const handleStatusUpdate = async (event) => {
+    event.preventDefault();
+    try {
+      setUpdating(true);
+      setError('');
+      await api.updateAnimalCareStatus(animalId, status, statusNotes);
+      setStatusNotes('');
+      await loadCare();
+    } catch (err) {
+      setError(err.message || 'Failed to update care status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleChecklistComplete = async (item) => {
+    if (item.status === 'completed' || updatingCareType) return;
+
+    try {
+      setUpdatingCareType(item.type);
+      setError('');
+      await api.createAnimalCareLog(animalId, {
+        careType: item.type,
+        notes: `${item.title} completed from daily care checklist.`,
+      });
+      await loadCare();
+    } catch (err) {
+      setError(err.message || 'Failed to update checklist item');
+    } finally {
+      setUpdatingCareType('');
+    }
+  };
+
+  const animal = careData?.animal;
+  const health = careData?.health;
+  const checklist = careData?.checklist || [];
+  const recentLogs = useMemo(() => (
+    [...(careData?.logs || [])].sort((first, second) => {
+      const firstTime = new Date(first.loggedAt || first.time || 0).getTime();
+      const secondTime = new Date(second.loggedAt || second.time || 0).getTime();
+      return secondTime - firstTime;
+    })
+  ), [careData?.logs]);
+
   return (
     <div className="care-detail-page">
       <StaffTopbar />
@@ -100,120 +129,155 @@ const StaffCareDetail = () => {
         <div className="care-title-row">
           <div>
             <nav className="care-breadcrumb" aria-label="Breadcrumb">
-              <span>Veterinary</span>
-              <b>&gt;</b>
-              <span>Active Cases</span>
+              <Link to="/staff/animals">Animals</Link>
               <b>&gt;</b>
               <strong>Daily Care</strong>
             </nav>
-            <h1>Daily Care Details</h1>
+            <h1>Daily Care Detail</h1>
           </div>
 
-          <button type="button" className="add-care-log-button">
-            <span>▣</span>
-            Add Care Log
-          </button>
+          {animal && (
+            <Link className="add-care-log-button" to={`/staff/animals/${animal.id}/care-logs/new`}>
+              <span>+</span>
+              Add Care Log
+            </Link>
+          )}
         </div>
 
-        <section className="care-detail-grid">
-          <aside className="care-left-column">
-            <article className="animal-profile-card">
-              <div className="animal-photo-wrap">
-                <img src={animal.image} alt={`${animal.name} profile`} />
-                <span className="healthy-badge">Healthy</span>
-              </div>
+        {error && <div className="care-message error">{error}</div>}
+        {loading && <div className="care-message">Loading care detail...</div>}
 
-              <div className="animal-profile-heading">
-                <div>
-                  <h2>{animal.name}</h2>
-                  <p>{animal.species}</p>
+        {!loading && animal && (
+          <section className="care-detail-grid">
+            <aside className="care-left-column">
+              <article className="animal-profile-card">
+                <div className="animal-photo-wrap animal-initial-wrap">
+                  <strong>{animal.name?.charAt(0) || 'A'}</strong>
+                  <span className="healthy-badge">{animal.status}</span>
                 </div>
-                <span className="animal-id">ID: {animal.identifier}</span>
-              </div>
 
-              <dl className="animal-meta-grid">
-                <div>
-                  <dt>Age</dt>
-                  <dd>{animal.age}</dd>
+                <div className="animal-profile-heading">
+                  <div>
+                    <h2>{animal.name}</h2>
+                    <p>{animal.scientificName || animal.species}</p>
+                  </div>
+                  <span className="animal-id">ID: {animal.code}</span>
                 </div>
-                <div>
-                  <dt>Weight</dt>
-                  <dd>{animal.weight} +</dd>
-                </div>
-                <div>
-                  <dt>Sex</dt>
-                  <dd>{animal.sex}</dd>
-                </div>
-                <div>
-                  <dt>Enclosure</dt>
-                  <dd>{animal.enclosure}</dd>
-                </div>
-              </dl>
-            </article>
 
-            <article className="care-panel vital-panel">
-              <h2><span>~</span> Recent Vitals</h2>
-              <div className="vital-list">
-                {vitals.map((vital) => (
-                  <div className="vital-item" key={vital.label}>
-                    <div>
-                      <span>{vital.label}</span>
-                      <strong>{vital.value}</strong>
+                <dl className="animal-meta-grid">
+                  <div>
+                    <dt>Sex</dt>
+                    <dd>{animal.gender}</dd>
+                  </div>
+                  <div>
+                    <dt>Weight</dt>
+                    <dd>{health?.weightKg ? `${health.weightKg} kg` : 'N/A'}</dd>
+                  </div>
+                  <div>
+                    <dt>Diet</dt>
+                    <dd>{animal.diet || 'N/A'}</dd>
+                  </div>
+                  <div>
+                    <dt>Habitat</dt>
+                    <dd>{animal.area || animal.areaLocation || 'N/A'}</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <article className="care-panel vital-panel">
+                <h2><span>~</span> Recent Vitals</h2>
+                <div className="vital-list">
+                  <div className="vital-item">
+                    <div><span>Weight</span><strong>{health?.weightKg ? `${health.weightKg} kg` : 'N/A'}</strong></div>
+                    <i style={{ '--level': '70%' }} />
+                  </div>
+                  <div className="vital-item">
+                    <div><span>Temperature</span><strong>{health?.temperatureC ? `${health.temperatureC} C` : 'N/A'}</strong></div>
+                    <i style={{ '--level': '58%' }} />
+                  </div>
+                  <div className="vital-item">
+                    <div><span>Condition</span><strong>{health?.condition || animal.status}</strong></div>
+                    <i style={{ '--level': animal.status === 'HEALTHY' ? '80%' : '45%' }} />
+                  </div>
+                </div>
+              </article>
+            </aside>
+
+            <section className="care-right-column">
+              <article className="care-panel checklist-panel">
+                <div className="care-panel-header">
+                  <h2>Daily Care Checklist</h2>
+                  <span>{formatDate(new Date())}</span>
+                </div>
+
+                <div className="checklist-items">
+                  {checklist.map((item) => (
+                    <div className={`checklist-item ${item.status}`} key={item.type}>
+                      <StatusIcon
+                        status={item.status}
+                        disabled={updatingCareType === item.type || Boolean(updatingCareType)}
+                        onClick={() => handleChecklistComplete(item)}
+                      />
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>{item.notes || (item.status === 'completed' ? 'Completed today.' : 'No log recorded today.')}</p>
+                      </div>
+                      {item.time && <time>{item.time}</time>}
+                      {item.status === 'pending' && (
+                        <button
+                          type="button"
+                          className="checklist-complete-button"
+                          disabled={updatingCareType === item.type || Boolean(updatingCareType)}
+                          onClick={() => handleChecklistComplete(item)}
+                        >
+                          {updatingCareType === item.type ? 'Saving...' : 'Mark as Done'}
+                        </button>
+                      )}
                     </div>
-                    <i style={{ '--level': `${vital.level}%` }} />
-                  </div>
-                ))}
-              </div>
-            </article>
-          </aside>
+                  ))}
+                </div>
+              </article>
 
-          <section className="care-right-column">
-            <article className="care-panel checklist-panel">
-              <div className="care-panel-header">
-                <h2>Care Checklist</h2>
-                <span>Oct 24, 2024</span>
-              </div>
+              <article className="care-panel care-status-panel">
+                <h2>Care Status</h2>
+                <form onSubmit={handleStatusUpdate}>
+                  <select value={status} onChange={(event) => setStatus(event.target.value)}>
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  <input value={statusNotes} onChange={(event) => setStatusNotes(event.target.value)} placeholder="Optional status note..." />
+                  <button type="submit" disabled={updating}>{updating ? 'Updating...' : 'Update Status'}</button>
+                </form>
+              </article>
 
-              <div className="checklist-items">
-                {checklist.map((item) => (
-                  <div className={`checklist-item ${item.status}`} key={item.title}>
-                    <StatusIcon status={item.status} />
-                    <div>
-                      <strong>{item.title}</strong>
-                      <p>{item.note}</p>
-                    </div>
-                    {item.time && <time>{item.time}</time>}
-                    {item.status === 'pending' && <em>Pending</em>}
-                    {item.action && <button type="button">{item.action}</button>}
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="care-panel logs-panel">
-              <div className="care-panel-header">
-                <h2>Recent Logs</h2>
-                <button type="button" aria-label="Filter logs">≡</button>
-              </div>
-
-              <div className="log-table" role="table" aria-label="Recent care logs">
-                <div className="log-row log-head" role="row">
-                  <span>Date & Time</span>
-                  <span>Type</span>
-                  <span>Notes</span>
+              <article className="care-panel logs-panel">
+                <div className="care-panel-header">
+                  <h2>Recent Care History</h2>
+                  <Link to={`/staff/animals/${animal.id}/care-logs`}>View All</Link>
                 </div>
 
-                {logs.map((log) => (
-                  <div className="log-row" role="row" key={`${log.datetime}-${log.type}`}>
-                    <span>{log.datetime}</span>
-                    <span><em className="log-type">{log.type}</em></span>
-                    <span>{log.notes}</span>
+                <div className="log-table" role="table" aria-label="Recent care logs">
+                  <div className="log-row log-head" role="row">
+                    <span>Date & Time</span>
+                    <span>Type</span>
+                    <span>Notes</span>
                   </div>
-                ))}
-              </div>
-            </article>
+
+                  {recentLogs.length === 0 ? (
+                    <div className="care-empty-row">No care logs found.</div>
+                  ) : recentLogs.slice(0, 8).map((log) => (
+                    <div className="log-row" role="row" key={log.id}>
+                      <span>{log.time}</span>
+                      <span><em className="log-type">{log.careType}</em></span>
+                      <span>{log.notes || 'No notes'}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </section>
           </section>
-        </section>
+        )}
       </main>
     </div>
   );

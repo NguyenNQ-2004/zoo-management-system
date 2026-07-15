@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import './StaffTasksPage.css';
+
+const statusOptions = [
+  { value: '', label: 'All Statuses' },
+  { value: 'TODO', label: 'To Do' },
+  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'DONE', label: 'Done' },
+];
 
 const formatDateTime = (value) => {
   if (!value) return 'No due date';
@@ -28,36 +36,28 @@ const toStatusClass = (status) => {
 
 const StaffTasksPage = () => {
   const [taskData, setTaskData] = useState(null);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState('');
   const [error, setError] = useState('');
 
+  const loadTasks = async (filters = { search, status }) => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await api.getStaffTasks(filters);
+      setTaskData(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load staff tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadTasks = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const data = await api.getStaffTasks();
-        if (isMounted) {
-          setTaskData(data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err.message || 'Failed to load staff tasks');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadTasks();
-
-    return () => {
-      isMounted = false;
-    };
+    loadTasks({ search: '', status: '' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const tasks = taskData?.tasks || [];
@@ -70,15 +70,62 @@ const StaffTasksPage = () => {
     { label: 'Done', value: summary.done ?? 0 },
   ]), [summary.total, summary.todo, summary.inProgress, summary.done, tasks.length]);
 
+  const handleFilterSubmit = (event) => {
+    event.preventDefault();
+    loadTasks({ search, status });
+  };
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setStatus('');
+    loadTasks({ search: '', status: '' });
+  };
+
+  const handleStatusChange = async (taskId, nextStatus) => {
+    try {
+      setUpdatingId(taskId);
+      setError('');
+      await api.updateStaffTaskStatus(taskId, nextStatus);
+      await loadTasks({ search, status });
+    } catch (err) {
+      setError(err.message || 'Failed to update task status');
+    } finally {
+      setUpdatingId('');
+    }
+  };
+
   return (
     <div className="staff-tasks-page">
       <header className="staff-tasks-header">
         <div>
           <span>Operations</span>
-          <h1>Assigned Tasks</h1>
-          <p>Tasks assigned to you from current zoo operations.</p>
+          <h1>My Tasks</h1>
+          <p>Manage and track daily conservation and operational assignments.</p>
         </div>
       </header>
+
+      <form className="task-filter-panel" onSubmit={handleFilterSubmit}>
+        <label>
+          <span>Search</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search task name or animal..."
+          />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <button type="submit">Apply Filters</button>
+        <button type="button" className="secondary" onClick={handleClearFilters}>Clear</button>
+      </form>
 
       {error && (
         <div className="staff-tasks-message error" role="alert">
@@ -113,6 +160,7 @@ const StaffTasksPage = () => {
                 <span>Due</span>
                 <span>Priority</span>
                 <span>Status</span>
+                <span>Action</span>
               </div>
 
               {tasks.length === 0 ? (
@@ -135,9 +183,19 @@ const StaffTasksPage = () => {
                     </em>
                   </span>
                   <span>
-                    <em className={`task-pill status-${toStatusClass(task.status)}`}>
-                      {task.status}
-                    </em>
+                    <select
+                      className={`task-status-select status-${toStatusClass(task.status)}`}
+                      value={task.rawStatus}
+                      disabled={updatingId === task.id}
+                      onChange={(event) => handleStatusChange(task.id, event.target.value)}
+                    >
+                      <option value="TODO">To Do</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="DONE">Done</option>
+                    </select>
+                  </span>
+                  <span>
+                    <Link className="task-row-link" to={`/staff/tasks/${task.id}`}>Detail</Link>
                   </span>
                 </div>
               ))}
