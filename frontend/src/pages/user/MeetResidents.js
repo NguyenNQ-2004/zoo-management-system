@@ -1,8 +1,10 @@
 import React from 'react';
 import { ArrowRight, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './MeetResidents.css';
 
 const MeetResidents = () => {
+  const navigate = useNavigate();
   const animals = [
     {
       id: 1,
@@ -69,7 +71,7 @@ const MeetResidents = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#4b5563', fontSize: '13px', marginBottom: '20px' }}>
                 <MapPin size={14} /> {animal.zone}
               </div>
-              <button className="btn-outline-green">View Profile</button>
+              <button className="btn-outline-green" onClick={() => navigate(`/user/animals/${animal.id}`)}>View Profile</button>
             </div>
           </div>
         ))}
