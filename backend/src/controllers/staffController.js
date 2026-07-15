@@ -172,11 +172,13 @@ const parseTaskStatus = (status) => {
 const parseAnimalStatus = (status) => {
   const normalized = String(status || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
   const aliases = {
+    ACTIVE: 'Active',
+    INACTIVE: 'Inactive',
     HEALTHY: 'HEALTHY',
     OBSERVATION: 'OBSERVATION',
     MONITORING: 'OBSERVATION',
     TREATMENT: 'TREATMENT',
-    TRANSFERRED: 'TRANSFERRED',
+    TRANSFERRED: 'Transferred',
   };
 
   return aliases[normalized] || null;

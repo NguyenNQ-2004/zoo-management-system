@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Users, ChevronLeft, ChevronRight, Check, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../services/api';
 import './BookingPage.css';
 
 const BookingPage = () => {
@@ -31,7 +32,7 @@ const BookingPage = () => {
 
   const steps = ['Visit Info', 'Tickets', 'Review', 'Success'];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 3) {
       const newTicket = {
         id: 'ZLX-' + Math.floor(1000 + Math.random() * 9000) + '-XP',
@@ -60,6 +61,20 @@ const BookingPage = () => {
         localStorage.setItem('zoo_tickets', JSON.stringify([newTicket, ...existing]));
       }
       setCreatedTicketId(newTicket.id);
+
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        await api.createBooking({
+          ticketType,
+          date: selectedDate,
+          adults,
+          children,
+          total: total.toString(),
+          userEmail: currentUser.email || 'user@zoo.com'
+        });
+      } catch (err) {
+        console.error('Failed to sync booking to admin', err);
+      }
     }
     setStep(s => Math.min(4, s + 1));
   };

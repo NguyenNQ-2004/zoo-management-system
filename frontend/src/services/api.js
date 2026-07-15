@@ -166,6 +166,11 @@ export const api = {
     method: 'PUT',
     headers: getStaffHeaders(),
     body: JSON.stringify({ status, notes })
+  }),
+
+  createBooking: async (bookingData) => request('/user/bookings', {
+    method: 'POST',
+    body: JSON.stringify(bookingData)
   })
 };
 

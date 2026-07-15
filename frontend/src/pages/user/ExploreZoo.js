@@ -1,42 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Search, ChevronDown, ChevronLeft, ChevronRight, PawPrint, Map } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './User.css';
+import { areaApi } from '../../services/api';
 
 const ExploreZoo = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
 
-  const exhibits = [
-    {
-      id: 1,
-      title: 'Tropical Rainforest',
-      desc: 'Immerse yourself in a multi-level canopy experience featuring free-flying birds, primates, and dense tropical flora.',
-      species: 45,
-      zone: 'Zone A',
-      status: 'Open',
-      image: 'https://images.unsplash.com/photo-1596324121712-5bbc14482174?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 2,
-      title: 'Savanna Plains',
-      desc: 'A vast open-range habitat designed to replicate the African plains, home to our largest grazing herds and predators.',
-      species: 28,
-      zone: 'Zone C',
-      status: 'Open',
-      image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 3,
-      title: 'Aquatic Center',
-      desc: 'Deep water habitats showcasing marine life in highly specialized, controlled aquatic environments.',
-      species: 120,
-      zone: 'Zone B',
-      status: 'Closed for Maintenance',
-      image: 'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    }
-  ];
+  const [exhibits, setExhibits] = useState([]);
+
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const data = await areaApi.getAll();
+        const mapped = data.map(area => ({
+          id: area._id,
+          title: area.name,
+          desc: area.description || 'Discover our magnificent animals in a beautifully curated habitat.',
+          species: area.capacity || 0,
+          zone: `Zone ${area.code}`,
+          status: area.status, // 'Open', 'Maintenance', 'Closed'
+          image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+        }));
+        setExhibits(mapped);
+      } catch (err) {
+        console.error('Failed to fetch exhibits', err);
+      }
+    };
+    fetchAreas();
+  }, []);
 
   const filteredExhibits = exhibits.filter(ex => {
     const matchesSearch = ex.title.toLowerCase().includes(searchQuery.toLowerCase()) || 

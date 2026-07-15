@@ -11,8 +11,11 @@ import AdminLayout from '../layouts/AdminLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
+<<<<<<< HEAD
 import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
 import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
+=======
+>>>>>>> 5066dda (fix: resolve animal status enum error and sync user booking to admin)
 import ExploreZoo from '../pages/user/ExploreZoo';
 import GuestServices from '../pages/user/GuestServices';
 import AnimalsPage from '../pages/user/AnimalsPage';
@@ -23,6 +26,7 @@ import TicketDetail from '../pages/user/TicketDetail';
 import ZooAreaDetail from '../pages/user/ZooAreaDetail';
 import ServiceDetail from '../pages/user/ServiceDetail';
 import UserProfile from '../pages/user/UserProfile';
+
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
 import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
