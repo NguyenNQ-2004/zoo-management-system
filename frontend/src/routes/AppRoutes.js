@@ -14,6 +14,9 @@ import UserDashboard from '../pages/user/UserDashboard';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import VetDashboard from '../pages/veterinary/VetDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import AreaManagement from '../pages/admin/AreaManagement';
+import AnimalManagement from '../pages/admin/AnimalManagement';
+import ServiceManagement from '../pages/admin/ServiceManagement';
 import PlaceholderPage from '../components/PlaceholderPage';
 
 // Route Guards
@@ -48,6 +51,9 @@ const AppRoutes = () => {
         {/* Admin Routes */}
         <Route path="/admin" element={<RoleRoute allowedRole="ADMIN"><AdminLayout /></RoleRoute>}>
           <Route index element={<AdminDashboard />} />
+          <Route path="areas" element={<AreaManagement />} />
+          <Route path="animals" element={<AnimalManagement />} />
+          <Route path="services" element={<ServiceManagement />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Admin" functions={[]} />} />
         </Route>
       </Routes>
