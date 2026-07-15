@@ -8,6 +8,10 @@ const navLinkStyle = ({ isActive }) => ({
   borderRadius: '10px',
   backgroundColor: isActive ? 'rgba(255,255,255,0.14)' : 'transparent',
   border: isActive ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  fontSize: '14px',
 });
 
 const AdminLayout = () => {
@@ -26,18 +30,20 @@ const AdminLayout = () => {
           <h2 style={{ margin: '8px 0 0 0', fontSize: '24px' }}>Admin Portal</h2>
         </div>
         <NavLink to="/admin" end style={navLinkStyle}>Dashboard</NavLink>
+        <NavLink to="/admin/areas" style={navLinkStyle}>Khu vực</NavLink>
+        <NavLink to="/admin/animals" style={navLinkStyle}>Động vật</NavLink>
+        <NavLink to="/admin/services" style={navLinkStyle}>Dịch vụ</NavLink>
         <NavLink to="/admin/users" style={navLinkStyle}>Users</NavLink>
         <NavLink to="/admin/staff" style={navLinkStyle}>Staff</NavLink>
         <NavLink to="/admin/assignments" style={navLinkStyle}>Task Assignment</NavLink>
-        <NavLink to="/admin/animals" style={navLinkStyle}>Animals</NavLink>
         <NavLink to="/admin/tickets" style={navLinkStyle}>Tickets</NavLink>
         <NavLink to="/admin/reports" style={navLinkStyle}>Reports</NavLink>
         <div style={{ marginTop: 'auto' }}>
           <button 
             onClick={handleLogout} 
-            style={{ width: '100%', background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.4)', padding: '10px', cursor: 'pointer', borderRadius: '10px' }}
+            style={{ width: '100%', background: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.4)', padding: '10px', cursor: 'pointer', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            Logout
+            Đăng xuất
           </button>
         </div>
       </aside>

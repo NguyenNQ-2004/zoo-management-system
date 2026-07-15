@@ -19,44 +19,40 @@ const animalSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    imageUrl: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    scientificName: {
-      type: String,
-      default: '',
-      trim: true,
-    },
     gender: {
       type: String,
-      enum: ['MALE', 'FEMALE', 'UNKNOWN'],
-      default: 'UNKNOWN',
+      enum: ['Male', 'Female', 'Unknown'],
+      default: 'Unknown',
     },
-    dateOfBirth: {
-      type: Date,
+    age: {
+      type: Number,
       default: null,
+      min: 0,
+    },
+    healthStatus: {
+      type: String,
+      enum: ['Healthy', 'Sick', 'Under Treatment', 'Quarantine', 'Recovered'],
+      default: 'Healthy',
+    },
+    behavior: {
+      type: String,
+      default: '',
+      trim: true,
     },
     origin: {
       type: String,
       default: '',
       trim: true,
     },
-    diet: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-    status: {
-      type: String,
-      enum: ['HEALTHY', 'OBSERVATION', 'TREATMENT', 'TRANSFERRED'],
-      default: 'HEALTHY',
-    },
     area: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ZooArea',
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ['Active', 'Inactive', 'Transferred'],
+      default: 'Active',
     },
     caretaker: {
       type: mongoose.Schema.Types.ObjectId,

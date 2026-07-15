@@ -1,16 +1,11 @@
 require('dotenv').config();
-const User = require('./src/models/User');
+const mongoose = require('mongoose');
+const connectDB = require('./src/config/db');
+
 const ZooArea = require('./src/models/ZooArea');
 const Animal = require('./src/models/Animal');
-const AnimalHealth = require('./src/models/AnimalHealth');
-const Booking = require('./src/models/Booking');
-const CareLog = require('./src/models/CareLog');
-const MedicalLog = require('./src/models/MedicalLog');
-const StaffTask = require('./src/models/StaffTask');
-const Ticket = require('./src/models/Ticket');
-const Treatment = require('./src/models/Treatment');
 const ZooService = require('./src/models/ZooService');
-const connectDB = require('./src/config/db');
+const User = require('./src/models/User');
 
 const demoUsers = [
   {
@@ -69,22 +64,15 @@ async function seedDatabase() {
   try {
     await connectDB();
 
-    await Promise.all([
-      Treatment.deleteMany({}),
-      MedicalLog.deleteMany({}),
-      AnimalHealth.deleteMany({}),
-      CareLog.deleteMany({}),
-      StaffTask.deleteMany({}),
-      Booking.deleteMany({}),
-      Animal.deleteMany({}),
-      ZooArea.deleteMany({}),
-      ZooService.deleteMany({}),
-      Ticket.deleteMany({}),
-      User.deleteMany({}),
-    ]);
+    // Clear relevant collections
+    await ZooArea.deleteMany({});
+    await Animal.deleteMany({});
+    await ZooService.deleteMany({});
+    await User.deleteMany({});
 
-    console.log('Seed reset complete.');
+    console.log('--- Bắt đầu khởi tạo dữ liệu mẫu (Seeding Database) ---');
 
+    // Seed users
     const createdUsers = {};
     for (const userData of demoUsers) {
       const user = new User(userData);
@@ -94,315 +82,115 @@ async function seedDatabase() {
     console.log('✅ Đã tạo thành công 4 tài khoản Demo (Mật khẩu đều là: 123456):');
     console.table(demoUsers.map(u => ({ Email: u.email, Role: u.role })));
 
+    // 1. Khởi tạo dữ liệu mẫu cho Zoo Area
     const areas = await ZooArea.insertMany([
       {
-        code: 'SAVANNAH',
-        name: 'Savannah Zone',
-        description: 'Large mammals and open habitat exhibits.',
-        habitatType: 'SAVANNAH',
-        location: 'North Gate',
-        capacity: 180,
-        manager: createdUsers['admin@zoo.com']._id,
-        assignedStaff: [createdUsers['staff@zoo.com']._id],
+        code: 'A01',
+        name: 'Khu vực Đồi Sư Tử',
+        description: 'Khu vực nuôi dưỡng sư tử châu Phi với mô phỏng thảo nguyên bán hoang mạc.',
+        habitatType: 'Grassland',
+        location: 'Phía Bắc sở thú',
+        capacity: 10,
+        status: 'Open',
       },
       {
-        code: 'REPTILE',
-        name: 'Reptile House',
-        description: 'Indoor reptile and amphibian area.',
-        habitatType: 'INDOOR',
-        location: 'Central Dome',
-        capacity: 60,
-        manager: createdUsers['admin@zoo.com']._id,
-        assignedStaff: [createdUsers['staff2@zoo.com']._id],
+        code: 'A02',
+        name: 'Khu rừng nhiệt đới',
+        description: 'Môi trường ẩm ướt dành cho các loài chim, bò sát và linh trưởng.',
+        habitatType: 'Rainforest',
+        location: 'Phía Đông sở thú',
+        capacity: 25,
+        status: 'Open',
       },
       {
-        code: 'AQUATIC',
-        name: 'Aquatic World',
-        description: 'Penguins and other aquatic species.',
-        habitatType: 'AQUATIC',
-        location: 'East Wing',
-        capacity: 120,
-        manager: createdUsers['admin@zoo.com']._id,
-        assignedStaff: [createdUsers['staff@zoo.com']._id, createdUsers['staff2@zoo.com']._id],
+        code: 'A03',
+        name: 'Thế giới bò sát',
+        description: 'Nhà kính điều hòa nhiệt độ nuôi dưỡng các loài bò sát quý hiếm.',
+        habitatType: 'Indoor',
+        location: 'Trung tâm hành chính',
+        capacity: 15,
+        status: 'Maintenance',
       },
     ]);
+    console.log(`✅ Đã khởi tạo thành công ${areas.length} khu vực (Zoo Area).`);
 
-    const areaByCode = Object.fromEntries(areas.map((area) => [area.code, area]));
-
+    // 2. Khởi tạo dữ liệu mẫu cho Animal
     const animals = await Animal.insertMany([
       {
-        code: 'ANI-LION-001',
-        name: 'Leo',
-        species: 'Lion',
-        imageUrl: 'https://loremflickr.com/900/620/lion,wildlife?lock=101',
-        scientificName: 'Panthera leo',
-        gender: 'MALE',
-        dateOfBirth: new Date('2018-04-15'),
-        origin: 'South Africa',
-        diet: 'Beef and chicken',
-        status: 'HEALTHY',
-        area: areaByCode.SAVANNAH._id,
-        caretaker: createdUsers['staff@zoo.com']._id,
-        notes: 'Main attraction in the savannah area.',
+        code: 'AN001',
+        name: 'Simba',
+        species: 'Sư tử châu Phi (Panthera leo)',
+        gender: 'Male',
+        age: 5,
+        healthStatus: 'Healthy',
+        behavior: 'Active',
+        origin: 'Nam Phi',
+        area: areas[0]._id,
+        status: 'Active',
       },
       {
-        code: 'ANI-PENGUIN-001',
-        name: 'Luna',
-        species: 'Penguin',
-        imageUrl: 'https://loremflickr.com/900/620/penguin,wildlife?lock=102',
-        scientificName: 'Spheniscus humboldti',
-        gender: 'FEMALE',
-        dateOfBirth: new Date('2020-09-03'),
-        origin: 'Peru',
-        diet: 'Fish',
-        status: 'OBSERVATION',
-        area: areaByCode.AQUATIC._id,
-        caretaker: createdUsers['staff2@zoo.com']._id,
-        notes: 'Recently reduced appetite, under observation.',
+        code: 'AN002',
+        name: 'Bella',
+        species: 'Vẹt đuôi dài xanh vàng (Ara ararauna)',
+        gender: 'Female',
+        age: 3,
+        healthStatus: 'Healthy',
+        behavior: 'Friendly',
+        origin: 'Nam Mỹ',
+        area: areas[1]._id,
+        status: 'Active',
       },
       {
-        code: 'ANI-PYTHON-001',
+        code: 'AN003',
         name: 'Kaa',
-        species: 'Python',
-        imageUrl: 'https://loremflickr.com/900/620/python,snake,wildlife?lock=103',
-        scientificName: 'Python bivittatus',
-        gender: 'UNKNOWN',
-        dateOfBirth: new Date('2017-06-22'),
-        origin: 'Thailand',
-        diet: 'Rodents',
-        status: 'HEALTHY',
-        area: areaByCode.REPTILE._id,
-        caretaker: createdUsers['staff2@zoo.com']._id,
-        notes: 'Requires weekly habitat humidity checks.',
+        species: 'Trăn gấm (Malayopython reticulatus)',
+        gender: 'Male',
+        age: 4,
+        healthStatus: 'Under Treatment',
+        behavior: 'Lethargic',
+        origin: 'Việt Nam',
+        area: areas[2]._id,
+        status: 'Active',
       },
     ]);
+    console.log(`✅ Đã khởi tạo thành công ${animals.length} cá thể động vật (Animal).`);
 
-    const animalByCode = Object.fromEntries(animals.map((animal) => [animal.code, animal]));
-
-    const tasks = await StaffTask.insertMany([
+    // 3. Khởi tạo dữ liệu mẫu cho Zoo Service
+    const services = await ZooService.insertMany([
       {
-        title: 'Morning feeding for Leo',
-        description: 'Prepare protein diet and verify feeding amount.',
-        taskType: 'CARE',
-        priority: 'HIGH',
-        assignedTo: createdUsers['staff@zoo.com']._id,
-        assignedBy: createdUsers['admin@zoo.com']._id,
-        area: areaByCode.SAVANNAH._id,
-        animal: animalByCode['ANI-LION-001']._id,
-        dueDate: new Date('2026-07-16T08:00:00'),
-        status: 'IN_PROGRESS',
+        code: 'SV001',
+        name: 'Chụp ảnh cùng động vật',
+        category: 'Trải nghiệm',
+        description: 'Dịch vụ chụp ảnh lưu niệm cùng các loài chim và bò sát thân thiện dưới sự giám sát của nhân viên.',
+        price: 50000,
+        duration: 15,
+        isActive: true,
       },
       {
-        title: 'Clean reptile enclosure',
-        description: 'Deep clean the python habitat and replace substrate.',
-        taskType: 'CLEANING',
-        priority: 'MEDIUM',
-        assignedTo: createdUsers['staff2@zoo.com']._id,
-        assignedBy: createdUsers['admin@zoo.com']._id,
-        area: areaByCode.REPTILE._id,
-        animal: animalByCode['ANI-PYTHON-001']._id,
-        dueDate: new Date('2026-07-16T10:30:00'),
-        status: 'TODO',
-      },
-      {
-        title: 'Support vet check for Luna',
-        description: 'Assist during follow-up health check.',
-        taskType: 'MEDICAL_SUPPORT',
-        priority: 'HIGH',
-        assignedTo: createdUsers['staff2@zoo.com']._id,
-        assignedBy: createdUsers['admin@zoo.com']._id,
-        area: areaByCode.AQUATIC._id,
-        animal: animalByCode['ANI-PENGUIN-001']._id,
-        dueDate: new Date('2026-07-16T14:00:00'),
-        status: 'TODO',
-      },
-    ]);
-
-    await CareLog.insertMany([
-      {
-        animal: animalByCode['ANI-LION-001']._id,
-        staff: createdUsers['staff@zoo.com']._id,
-        task: tasks[0]._id,
-        careType: 'FEEDING',
-        notes: 'Consumed full meal and remained active.',
-        loggedAt: new Date('2026-07-15T08:15:00'),
-      },
-      {
-        animal: animalByCode['ANI-PYTHON-001']._id,
-        staff: createdUsers['staff2@zoo.com']._id,
-        careType: 'OBSERVATION',
-        notes: 'Humidity stable, no unusual behavior.',
-        loggedAt: new Date('2026-07-15T11:00:00'),
-      },
-    ]);
-
-    await AnimalHealth.insertMany([
-      {
-        animal: animalByCode['ANI-LION-001']._id,
-        weightKg: 190,
-        temperatureC: 38.3,
-        appetite: 'GOOD',
-        condition: 'STABLE',
-        checkedBy: createdUsers['vet@zoo.com']._id,
-        lastCheckDate: new Date('2026-07-14T09:00:00'),
-        notes: 'Strong appetite and normal movement.',
-      },
-      {
-        animal: animalByCode['ANI-PENGUIN-001']._id,
-        weightKg: 24,
-        temperatureC: 39.1,
-        appetite: 'LOW',
-        condition: 'MONITORING',
-        checkedBy: createdUsers['vet@zoo.com']._id,
-        lastCheckDate: new Date('2026-07-15T13:30:00'),
-        notes: 'Mild appetite drop; scheduled follow-up.',
-      },
-      {
-        animal: animalByCode['ANI-PYTHON-001']._id,
-        weightKg: 55,
-        temperatureC: 29.8,
-        appetite: 'NORMAL',
-        condition: 'STABLE',
-        checkedBy: createdUsers['vet@zoo.com']._id,
-        lastCheckDate: new Date('2026-07-13T15:30:00'),
-        notes: 'Healthy and adapting well to enclosure.',
-      },
-    ]);
-
-    const medicalLogs = await MedicalLog.insertMany([
-      {
-        animal: animalByCode['ANI-PENGUIN-001']._id,
-        vet: createdUsers['vet@zoo.com']._id,
-        symptoms: 'Reduced appetite and lower activity level.',
-        diagnosis: 'Seasonal stress response',
-        treatmentPlan: 'Hydration support and 3-day monitoring.',
-        medications: ['Vitamin supplement'],
-        visitDate: new Date('2026-07-15T14:30:00'),
-        nextCheckDate: new Date('2026-07-18T10:00:00'),
-        status: 'FOLLOW_UP',
-      },
-    ]);
-
-    await Treatment.insertMany([
-      {
-        medicalLog: medicalLogs[0]._id,
-        animal: animalByCode['ANI-PENGUIN-001']._id,
-        vet: createdUsers['vet@zoo.com']._id,
-        title: 'Hydration and vitamin support',
-        medication: 'Vitamin supplement',
-        dosage: '5 ml daily',
-        schedule: 'After morning feeding',
-        startDate: new Date('2026-07-15'),
-        endDate: new Date('2026-07-18'),
-        status: 'ONGOING',
-      },
-    ]);
-
-    const tickets = await Ticket.insertMany([
-      {
-        code: 'ADULT-1D',
-        name: 'Adult Day Pass',
-        ticketType: 'ADULT',
-        price: 120000,
-        description: 'Standard admission for one adult.',
-      },
-      {
-        code: 'CHILD-1D',
-        name: 'Child Day Pass',
-        ticketType: 'CHILD',
-        price: 80000,
-        description: 'Standard admission for one child.',
-      },
-      {
-        code: 'VIP-1D',
-        name: 'VIP Experience',
-        ticketType: 'VIP',
-        price: 300000,
-        description: 'Priority entry and guided experience.',
-      },
-    ]);
-
-    const ticketByCode = Object.fromEntries(tickets.map((ticket) => [ticket.code, ticket]));
-
-    await Booking.insertMany([
-      {
-        bookingCode: 'BOOK-1001',
-        user: createdUsers['user@zoo.com']._id,
-        visitDate: new Date('2026-07-20'),
-        items: [
-          {
-            ticket: ticketByCode['ADULT-1D']._id,
-            quantity: 2,
-            unitPrice: 120000,
-          },
-          {
-            ticket: ticketByCode['CHILD-1D']._id,
-            quantity: 1,
-            unitPrice: 80000,
-          },
-        ],
-        totalAmount: 320000,
-        status: 'CONFIRMED',
-        paymentStatus: 'PAID',
-        notes: 'Family visit booking.',
-      },
-      {
-        bookingCode: 'BOOK-1002',
-        user: createdUsers['user@zoo.com']._id,
-        visitDate: new Date('2026-07-27'),
-        items: [
-          {
-            ticket: ticketByCode['VIP-1D']._id,
-            quantity: 1,
-            unitPrice: 300000,
-          },
-        ],
-        totalAmount: 300000,
-        status: 'PENDING',
-        paymentStatus: 'UNPAID',
-        notes: 'Pending confirmation for VIP slot.',
-      },
-    ]);
-
-    await ZooService.insertMany([
-      {
-        code: 'GUIDE-001',
-        name: 'Guided Safari Tour',
-        category: 'GUIDE',
-        description: '45-minute guided tour through key exhibits.',
+        code: 'SV002',
+        name: 'Xe điện tham quan trọn gói',
+        category: 'Di chuyển',
+        description: 'Chuyến xe điện đưa khách tham quan vòng quanh toàn bộ khuôn viên sở thú kèm hướng dẫn viên thuyết minh.',
         price: 150000,
-        durationMinutes: 45,
+        duration: 45,
+        isActive: true,
       },
       {
-        code: 'PHOTO-001',
-        name: 'Animal Photo Session',
-        category: 'PHOTO',
-        description: 'Professional souvenir photo package.',
-        price: 90000,
-        durationMinutes: 20,
-      },
-      {
-        code: 'FOOD-001',
-        name: 'Family Meal Combo',
-        category: 'FOOD',
-        description: 'Meal package redeemable at the central food court.',
-        price: 180000,
-        durationMinutes: 0,
+        code: 'SV003',
+        name: 'Trải nghiệm cho thú ăn',
+        category: 'Trải nghiệm',
+        description: 'Khách tham quan tự tay đút thức ăn đã được chuẩn bị sẵn cho hươu cao cổ và voi.',
+        price: 30000,
+        duration: 20,
+        isActive: false,
       },
     ]);
-
-    console.log('Demo database created successfully.');
-    console.table(
-      demoUsers.map((user) => ({
-        Email: user.email,
-        Role: user.role,
-        Password: '123456',
-      }))
-    );
+    console.log(`✅ Đã khởi tạo thành công ${services.length} dịch vụ sở thú (Zoo Service).`);
+    console.log('--- Hoàn tất quá trình nạp dữ liệu mẫu ---');
 
     process.exit(0);
   } catch (error) {
-    console.error('Seed failed:', error);
+    console.error('❌ Có lỗi xảy ra khi seed dữ liệu:', error);
     process.exit(1);
   }
 }
