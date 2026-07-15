@@ -17,6 +17,15 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AreaManagement from '../pages/admin/AreaManagement';
 import AnimalManagement from '../pages/admin/AnimalManagement';
 import ServiceManagement from '../pages/admin/ServiceManagement';
+
+// Develop Pages
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminStaffPage from '../pages/admin/AdminStaffPage';
+import AdminAssignmentsPage from '../pages/admin/AdminAssignmentsPage';
+import AdminAnimalsPage from '../pages/admin/AdminAnimalsPage';
+import AdminTicketsPage from '../pages/admin/AdminTicketsPage';
+import AdminReportsPage from '../pages/admin/AdminReportsPage';
+
 import PlaceholderPage from '../components/PlaceholderPage';
 
 // Route Guards
@@ -54,6 +63,12 @@ const AppRoutes = () => {
           <Route path="areas" element={<AreaManagement />} />
           <Route path="animals" element={<AnimalManagement />} />
           <Route path="services" element={<ServiceManagement />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="staff" element={<AdminStaffPage />} />
+          <Route path="assignments" element={<AdminAssignmentsPage />} />
+          <Route path="tickets" element={<AdminTicketsPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="admin-animals" element={<AdminAnimalsPage />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Admin" functions={[]} />} />
         </Route>
       </Routes>
