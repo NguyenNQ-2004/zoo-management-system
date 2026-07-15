@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, ClipboardList, Activity, ArrowRightLeft, FileText, ChevronDown, ChevronUp } from 'lucide-react';
@@ -28,8 +29,7 @@ const MedicalHistory = () => {
       try {
         if (isValidObjectId(id)) {
           // Valid MongoDB ID, fetch history for this single animal
-          const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/medical-history`);
-          const json = await res.json();
+          const json = await vetApi.getMedicalHistory(id);
           if (json.success) {
             setAnimal(json.data.animal);
             setLogs(json.data.logs || []);
@@ -39,16 +39,14 @@ const MedicalHistory = () => {
           }
         } else {
           // General entry (e.g. from sidebar), fetch all animals first
-          const res = await fetch('http://localhost:5000/api/vet/animals/health-status');
-          const json = await res.json();
+          const json = await vetApi.getAnimalHealthStatus();
           if (json.success) {
             setAnimalsList(json.data || []);
             if (json.data && json.data.length > 0) {
               const firstAnimal = json.data[0];
               setSelectedAnimalId(firstAnimal.id);
               // Fetch details for first animal
-              const historyRes = await fetch(`http://localhost:5000/api/vet/animals/${firstAnimal.id}/medical-history`);
-              const historyJson = await historyRes.json();
+              const historyJson = await vetApi.getMedicalHistory(firstAnimal.id);
               if (historyJson.success) {
                 setAnimal(historyJson.data.animal);
                 setLogs(historyJson.data.logs || []);
@@ -71,8 +69,7 @@ const MedicalHistory = () => {
     setSelectedAnimalId(newId);
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${newId}/medical-history`);
-      const json = await res.json();
+      const json = await vetApi.getMedicalHistory(newId);
       if (json.success) {
         setAnimal(json.data.animal);
         setLogs(json.data.logs || []);

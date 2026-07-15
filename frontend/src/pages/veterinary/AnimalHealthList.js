@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Download, Edit, Eye, AlertTriangle, Activity, Users, Calendar } from 'lucide-react';
 import StatusBadge from '../../components/vet/StatusBadge';
-import { api } from '../../services/api';
+import { api, vetApi } from '../../services/api';
 
 const AnimalHealthList = () => {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const AnimalHealthList = () => {
         if (statusFilter) params.status = statusFilter;
         if (areaFilter) params.area = areaFilter;
 
-        const response = await api.getVetAnimalHealthStatus(params);
+        const response = await vetApi.getAnimalHealthStatus(params);
         const data = response.data || response;
         setAnimals(Array.isArray(data) ? data : []);
         const areas = Array.from(new Set((Array.isArray(data) ? data : []).map((animal) => animal.area).filter(Boolean)));

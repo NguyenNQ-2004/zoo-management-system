@@ -34,8 +34,27 @@ const BookingPage = () => {
 
   const handleNext = async () => {
     if (step === 3) {
+      let backendId = 'ZLX-' + Math.floor(1000 + Math.random() * 9000) + '-XP';
+
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const response = await api.createBooking({
+          ticketType,
+          date: selectedDate,
+          adults,
+          children,
+          total: total.toString(),
+          userEmail: currentUser.email || 'user@zoo.com'
+        });
+        if (response && response.data && response.data.bookingCode) {
+          backendId = response.data.bookingCode;
+        }
+      } catch (err) {
+        console.error('Failed to sync booking to admin', err);
+      }
+
       const newTicket = {
-        id: 'ZLX-' + Math.floor(1000 + Math.random() * 9000) + '-XP',
+        id: backendId,
         status: 'Valid',
         ticketType,
         visitDate: selectedDate,
@@ -61,20 +80,6 @@ const BookingPage = () => {
         localStorage.setItem('zoo_tickets', JSON.stringify([newTicket, ...existing]));
       }
       setCreatedTicketId(newTicket.id);
-
-      try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        await api.createBooking({
-          ticketType,
-          date: selectedDate,
-          adults,
-          children,
-          total: total.toString(),
-          userEmail: currentUser.email || 'user@zoo.com'
-        });
-      } catch (err) {
-        console.error('Failed to sync booking to admin', err);
-      }
     }
     setStep(s => Math.min(4, s + 1));
   };

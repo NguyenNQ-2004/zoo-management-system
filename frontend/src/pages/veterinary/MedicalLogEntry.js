@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -30,16 +31,14 @@ const MedicalLogEntry = () => {
       try {
         if (isValidObjectId(id)) {
           // Valid MongoDB ID, fetch single animal
-          const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/health`);
-          const json = await res.json();
+          const json = await vetApi.getAnimalHealthDetail(id);
           if (json.success) {
             setAnimal(json.data.animal);
             setSelectedAnimalId(json.data.animal.id);
           }
         } else {
           // ID is not valid or is '1' (from general page), fetch list of all animals
-          const res = await fetch('http://localhost:5000/api/vet/animals/health-status');
-          const json = await res.json();
+          const json = await vetApi.getAnimalHealthStatus();
           if (json.success) {
             setAnimalsList(json.data || []);
             // Automatically select first animal if list is not empty
@@ -47,8 +46,8 @@ const MedicalLogEntry = () => {
               const firstAnimal = json.data[0];
               setSelectedAnimalId(firstAnimal.id);
               // Fetch that first animal details
-              const animalRes = await fetch(`http://localhost:5000/api/vet/animals/${firstAnimal.id}/health`);
-              const animalJson = await animalRes.json();
+              const animalRes = await vetApi.getAnimalHealthDetail(firstAnimal.id);
+              const animalJson = animalRes;
               if (animalJson.success) {
                 setAnimal(animalJson.data.animal);
               }
@@ -68,8 +67,7 @@ const MedicalLogEntry = () => {
     setSelectedAnimalId(newId);
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${newId}/health`);
-      const json = await res.json();
+      const json = await vetApi.getAnimalHealthDetail(newId);
       if (json.success) {
         setAnimal(json.data.animal);
       }
@@ -85,19 +83,19 @@ const MedicalLogEntry = () => {
       alert('Please select an animal.');
       return;
     }
+    if (!formData.diagnosis.trim()) {
+      alert('Please enter Clinical Findings & Diagnosis.');
+      return;
+    }
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${selectedAnimalId}/medical-logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
+      const res = await vetApi.createMedicalLog(selectedAnimalId, formData);
+      if (res) {
+        alert('Medical log saved successfully!');
         navigate(`/vet/health/${selectedAnimalId}`);
-      } else {
-        alert('Failed to save medical log.');
       }
     } catch (error) {
       console.error('Error submitting log:', error);
+      alert('Failed to save medical log: ' + error.message);
     }
   };
 

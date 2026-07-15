@@ -32,6 +32,9 @@ const {
 
 const router = express.Router();
 
+const adminController = require('../controllers/adminController');
+router.get('/dashboard', adminController.getDashboardStats);
+
 router.get('/users', listUsers);
 router.get('/users/:id', getUserById);
 router.post('/users', createUser);

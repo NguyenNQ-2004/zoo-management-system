@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
@@ -10,8 +11,7 @@ const TreatmentPlanList = () => {
   useEffect(() => {
     const fetchTreatments = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/vet/treatments');
-        const json = await res.json();
+        const json = await vetApi.getAllTreatments();
         if (json.success) {
           setTreatments(json.data);
         }

@@ -20,6 +20,7 @@ import {
   Cell
 } from 'recharts';
 import StatCard from '../../components/vet/StatCard';
+import { vetApi } from '../../services/api';
 
 const defaultHealthTrends = [
   { name: 'Mon', healthy: 320, treatment: 15 },
@@ -42,15 +43,12 @@ const VetDashboard = () => {
 
     const loadDashboard = async () => {
       try {
-        const [dashboardRes, recordsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/vet/dashboard'),
-          fetch('http://localhost:5000/api/vet/health-records?limit=3')
+        const [dashboardData, recordsData] = await Promise.all([
+          vetApi.getDashboard(),
+          vetApi.getHealthRecords(3)
         ]);
 
         if (!mounted) return;
-
-        const dashboardData = await dashboardRes.json();
-        const recordsData = await recordsRes.json();
 
         setDashboardData(dashboardData.data || dashboardData);
         setHealthRecords(recordsData.data || recordsData);

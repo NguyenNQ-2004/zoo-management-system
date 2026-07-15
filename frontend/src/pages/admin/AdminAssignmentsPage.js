@@ -99,8 +99,8 @@ const AdminAssignmentsPage = () => {
     return tasks.filter((task) => {
       const matchesSearch =
         !search ||
-        task.title.toLowerCase().includes(search) ||
-        task.description.toLowerCase().includes(search) ||
+        task.title?.toLowerCase().includes(search) ||
+        task.description?.toLowerCase().includes(search) ||
         task.assignedTo?.fullName?.toLowerCase().includes(search) ||
         task.area?.name?.toLowerCase().includes(search) ||
         task.animal?.name?.toLowerCase().includes(search);
@@ -344,7 +344,7 @@ const AdminAssignmentsPage = () => {
                       </div>
                     </td>
                     <td>{formatDateTime(task.dueDate)}</td>
-                    <td><span className={`admin-badge admin-badge-${task.status.toLowerCase()}`}>{task.status}</span></td>
+                    <td><span className={`admin-badge admin-badge-${task.status?.toLowerCase() || 'todo'}`}>{task.status}</span></td>
                     <td>
                       <div className="admin-table-actions">
                         <button type="button" className="admin-text-button" onClick={() => openEditModal(task)}>Edit</button>
