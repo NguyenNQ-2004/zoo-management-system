@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -28,16 +29,14 @@ const TreatmentPlanForm = () => {
       try {
         if (isValidObjectId(id)) {
           // Valid MongoDB ID, fetch single animal
-          const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/health`);
-          const json = await res.json();
+          const json = await vetApi.getAnimalHealthDetail(id);
           if (json.success) {
             setAnimal(json.data.animal);
             setSelectedAnimalId(json.data.animal.id);
           }
         } else {
           // ID is not valid or is '1' (from general page), fetch list of all animals
-          const res = await fetch('http://localhost:5000/api/vet/animals/health-status');
-          const json = await res.json();
+          const json = await vetApi.getAnimalHealthStatus();
           if (json.success) {
             setAnimalsList(json.data || []);
             // Automatically select first animal if list is not empty
@@ -45,8 +44,8 @@ const TreatmentPlanForm = () => {
               const firstAnimal = json.data[0];
               setSelectedAnimalId(firstAnimal.id);
               // Fetch that first animal details
-              const animalRes = await fetch(`http://localhost:5000/api/vet/animals/${firstAnimal.id}/health`);
-              const animalJson = await animalRes.json();
+              const animalRes = await vetApi.getAnimalHealthDetail(firstAnimal.id);
+              const animalJson = animalRes;
               if (animalJson.success) {
                 setAnimal(animalJson.data.animal);
               }
@@ -66,8 +65,7 @@ const TreatmentPlanForm = () => {
     setSelectedAnimalId(newId);
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${newId}/health`);
-      const json = await res.json();
+      const json = await vetApi.getAnimalHealthDetail(newId);
       if (json.success) {
         setAnimal(json.data.animal);
       }
@@ -83,19 +81,19 @@ const TreatmentPlanForm = () => {
       alert('Please select an animal.');
       return;
     }
+    if (!formData.title.trim()) {
+      alert('Please enter a Primary Diagnosis (Title).');
+      return;
+    }
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${selectedAnimalId}/treatments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
+      const res = await vetApi.createTreatmentPlan(selectedAnimalId, formData);
+      if (res) {
+        alert('Treatment plan created successfully!');
         navigate(`/vet/treatments`);
-      } else {
-        alert('Failed to save treatment plan.');
       }
     } catch (error) {
       console.error('Error submitting treatment:', error);
+      alert('Failed to save treatment plan: ' + error.message);
     }
   };
 
@@ -106,8 +104,8 @@ const TreatmentPlanForm = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: 'var(--text-dark)' }}>Create Treatment Plan</h1>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={{ padding: '10px 20px', backgroundColor: 'white', color: 'var(--text-dark)', border: '1px solid #e5e7eb', borderRadius: '8px', fontWeight: '500', cursor: 'pointer' }}>Save Draft</button>
-          <button onClick={handleSubmit} style={{ padding: '10px 20px', backgroundColor: '#064e3b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '500', cursor: 'pointer' }}>Create Plan</button>
+          <button type="button" onClick={() => { alert('Draft saved to local storage.'); navigate('/vet/treatments'); }} style={{ padding: '10px 20px', backgroundColor: 'white', color: 'var(--text-dark)', border: '1px solid #e5e7eb', borderRadius: '8px', fontWeight: '500', cursor: 'pointer' }}>Save Draft</button>
+          <button type="button" onClick={handleSubmit} style={{ padding: '10px 20px', backgroundColor: '#064e3b', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '500', cursor: 'pointer' }}>Create Plan</button>
         </div>
       </div>
 

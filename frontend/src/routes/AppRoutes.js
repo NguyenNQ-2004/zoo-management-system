@@ -13,6 +13,17 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
 import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
+import ExploreZoo from '../pages/user/ExploreZoo';
+import GuestServices from '../pages/user/GuestServices';
+import AnimalsPage from '../pages/user/AnimalsPage';
+import AnimalDetail from '../pages/user/AnimalDetail';
+import BookingPage from '../pages/user/BookingPage';
+import MyTickets from '../pages/user/MyTickets';
+import TicketDetail from '../pages/user/TicketDetail';
+import ZooAreaDetail from '../pages/user/ZooAreaDetail';
+import ServiceDetail from '../pages/user/ServiceDetail';
+import UserProfile from '../pages/user/UserProfile';
+
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
 import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
@@ -58,6 +69,16 @@ const AppRoutes = () => {
         {/* User Routes */}
         <Route path="/user" element={<RoleRoute allowedRole="USER"><UserLayout /></RoleRoute>}>
           <Route index element={<UserDashboard />} />
+          <Route path="explore" element={<ExploreZoo />} />
+          <Route path="explore/:id" element={<ZooAreaDetail />} />
+          <Route path="services" element={<GuestServices />} />
+          <Route path="services/:id" element={<ServiceDetail />} />
+          <Route path="animals" element={<AnimalsPage />} />
+          <Route path="animals/:id" element={<AnimalDetail />} />
+          <Route path="book" element={<BookingPage />} />
+          <Route path="tickets" element={<MyTickets />} />
+          <Route path="tickets/:id" element={<TicketDetail />} />
+          <Route path="profile" element={<UserProfile />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="User" functions={[]} />} />
         </Route>
 

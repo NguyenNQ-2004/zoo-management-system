@@ -1925,7 +1925,7 @@ const getReports = async (req, res) => {
   }
 };
 
-module.exports = {
+const exportedFunctions = {
   listUsers,
   getUserById,
   createUser,
@@ -1954,4 +1954,56 @@ module.exports = {
   listBookings,
   updateBookingStatus,
   getReports,
+};
+
+// --- DASHBOARD API ---
+const getDashboardStats = async (req, res) => {
+  try {
+    const [totalUsers, totalStaff, totalVets, activeAreas, totalAnimals, pendingBookings, overdueTasks] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: 'STAFF' }),
+      User.countDocuments({ role: 'VET' }),
+      ZooArea.countDocuments({ status: 'OPEN' }),
+      Animal.countDocuments(),
+      Booking.countDocuments({ status: 'PENDING' }),
+      StaffTask.countDocuments({ status: 'OVERDUE' })
+    ]);
+
+    const usersRoleCounts = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+
+    const chartRows = [
+      { label: 'Users', value: usersRoleCounts.find(r => r._id === 'USER')?.count || 0, color: '#1b5e3c' },
+      { label: 'Staff', value: usersRoleCounts.find(r => r._id === 'STAFF')?.count || 0, color: '#2f7d57' },
+      { label: 'Vets', value: usersRoleCounts.find(r => r._id === 'VET')?.count || 0, color: '#4e9f75' },
+      { label: 'Admins', value: usersRoleCounts.find(r => r._id === 'ADMIN')?.count || 0, color: '#7dc8a1' },
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        metrics: {
+          totalUsers,
+          operationalStaff: totalStaff + totalVets,
+          activeAreas,
+          totalAnimals,
+          pendingBookings,
+          overdueTasks
+        },
+        chartRows,
+        alerts: [
+          { title: 'System Running', description: 'All systems are functional.', tone: 'info' }
+        ],
+        activity: []
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  ...exportedFunctions,
+  getDashboardStats,
 };

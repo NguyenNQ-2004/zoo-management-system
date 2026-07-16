@@ -33,7 +33,15 @@ const medicalLogSchema = new mongoose.Schema(
         trim: true,
       },
     ],
-    visitDate: {
+    type: {
+      type: String,
+      default: 'CHECKUP',
+    },
+    notes: {
+      type: String,
+      default: '',
+    },
+    date: {
       type: Date,
       default: Date.now,
     },
@@ -43,8 +51,8 @@ const medicalLogSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['OPEN', 'FOLLOW_UP', 'CLOSED'],
-      default: 'OPEN',
+      enum: ['OPEN', 'FOLLOW_UP', 'CLOSED', 'COMPLETED'],
+      default: 'CLOSED',
     },
   },
   {

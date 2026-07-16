@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -11,8 +12,7 @@ const TreatmentDetail = () => {
   useEffect(() => {
     const fetchTreatment = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/vet/treatments/${id}`);
-        const json = await res.json();
+        const json = await vetApi.getTreatmentDetail(id);
         if (json.success) {
           setTreatment(json.data);
           setStatus(json.data.status);
@@ -26,12 +26,8 @@ const TreatmentDetail = () => {
 
   const handleUpdateStatus = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/treatments/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, notes })
-      });
-      if (res.ok) {
+      const res = await vetApi.updateTreatmentStatus(id, status, notes);
+      if (res) {
         alert('Status updated successfully');
         navigate('/vet/treatments');
       }

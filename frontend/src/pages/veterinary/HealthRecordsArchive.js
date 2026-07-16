@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../../components/vet/StatusBadge';
-import { api } from '../../services/api';
+import { api, vetApi } from '../../services/api';
 
 const HealthRecordsArchive = () => {
   const [searchTerm, setSearchTerm] = useState('');

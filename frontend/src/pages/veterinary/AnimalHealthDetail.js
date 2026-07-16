@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, Plus, Activity, Thermometer, Heart, Clock } from 'lucide-react';
@@ -12,8 +13,7 @@ const AnimalHealthDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/health`);
-        const json = await res.json();
+        const json = await vetApi.getAnimalHealthDetail(id);
         if (json.success) {
           setData(json.data);
         }

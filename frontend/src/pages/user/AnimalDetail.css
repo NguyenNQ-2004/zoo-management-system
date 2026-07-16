@@ -1,0 +1,165 @@
+.animal-hero {
+  height: 500px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.hero-gradient {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
+}
+.btn-back-floating {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+}
+.btn-back-floating:hover {
+  background: rgba(255,255,255,0.4);
+}
+.animal-hero-content {
+  position: relative;
+  z-index: 10;
+  padding: 60px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+}
+.animal-hero-content h1 {
+  font-size: 48px;
+  margin: 0 0 5px 0;
+  font-weight: 800;
+}
+.animal-hero-content h3 {
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 400;
+  opacity: 0.8;
+  margin: 0;
+}
+.animal-badges {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.badge-status, .badge-zone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.badge-status.endangered {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.badge-zone {
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.animal-content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 60px;
+  display: flex;
+  gap: 40px;
+}
+.animal-main {
+  flex: 2;
+}
+.animal-main h2 {
+  font-size: 28px;
+  margin: 0 0 20px 0;
+  color: #111;
+}
+.animal-desc {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4b5563;
+  margin-bottom: 40px;
+}
+.fun-fact-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 30px;
+  position: relative;
+}
+.fun-fact-card h4 {
+  color: #166534;
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+.fun-fact-card p {
+  color: #15803d;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.animal-sidebar {
+  flex: 1;
+}
+.quick-stats-card {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+.quick-stats-card h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+}
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.stat-row:last-child {
+  margin-bottom: 0;
+}
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1B5E3C;
+}
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.stat-val {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+}

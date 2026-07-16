@@ -1,0 +1,60 @@
+.residents-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.resident-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+}
+.resident-image {
+  height: 220px;
+  width: 100%;
+}
+.resident-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.resident-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.resident-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.badge-healthy {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-active {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.btn-outline-green {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #1B5E3C;
+  color: #1B5E3C;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+}
+.btn-outline-green:hover {
+  background: #1B5E3C;
+  color: white;
+}
