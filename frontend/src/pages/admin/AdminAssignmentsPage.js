@@ -5,6 +5,7 @@ const taskTypes = ['CARE', 'CLEANING', 'MEDICAL_SUPPORT', 'MAINTENANCE'];
 const priorities = ['LOW', 'MEDIUM', 'HIGH'];
 const statuses = ['TODO', 'IN_PROGRESS', 'DONE'];
 const filterStatuses = ['ALL', ...statuses];
+const assignableRoles = ['STAFF', 'VET'];
 
 const emptyTaskForm = {
   title: '',
@@ -23,6 +24,16 @@ const toDateTimeInput = (value) => {
   const date = new Date(value);
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const isPastDateTime = (value) => {
+  if (!value) return false;
+  const selectedDate = new Date(value);
+  if (Number.isNaN(selectedDate.getTime())) return true;
+
+  const currentMinute = new Date();
+  currentMinute.setSeconds(0, 0);
+  return selectedDate < currentMinute;
 };
 
 const formatDateTime = (value) => {
@@ -175,8 +186,17 @@ const AdminAssignmentsPage = () => {
     setMessage('');
 
     try {
+      if (modalMode === 'create' && isPastDateTime(formData.dueDate)) {
+        throw new Error('Due date cannot be in the past. Please choose the current time or a future time.');
+      }
+
       if (!adminUser?._id) {
         throw new Error('Admin user was not found in the database. Run seed again or refresh users.');
+      }
+
+      const assignee = staff.find((member) => member._id === formData.assignedTo);
+      if (!assignee || !assignableRoles.includes(assignee.role)) {
+        throw new Error('Task assignee must be STAFF or VET.');
       }
 
       const payload = buildTaskPayload();
@@ -426,7 +446,7 @@ const AdminAssignmentsPage = () => {
               </label>
               <label className="admin-field admin-field-full">
                 <span>Due date</span>
-                <input name="dueDate" type="datetime-local" value={formData.dueDate} onChange={handleFormChange} required />
+                <input name="dueDate" type="datetime-local" min={modalMode === 'create' ? toDateTimeInput(new Date()) : undefined} value={formData.dueDate} onChange={handleFormChange} required />
               </label>
               <div className="admin-inline-actions">
                 <button type="submit" className="admin-button admin-button-primary" disabled={submitting}>

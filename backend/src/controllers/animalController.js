@@ -1,6 +1,34 @@
 const Animal = require('../models/Animal');
 const ZooArea = require('../models/ZooArea');
 
+const isBlank = (value) => typeof value !== 'string' || value.trim() === '';
+const isNonNegativeNumber = (value) => value === undefined || value === null || value === '' || (Number.isFinite(Number(value)) && Number(value) >= 0);
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const isValidHttpUrl = (value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch (error) {
+    return false;
+  }
+};
+
+const findDuplicateAnimalName = ({ name, species, area, excludeId = null }) => {
+  const filters = {
+    name: new RegExp(`^${escapeRegExp(name.trim())}$`, 'i'),
+    $or: [
+      { species: new RegExp(`^${escapeRegExp(species.trim())}$`, 'i') },
+      { area },
+    ],
+  };
+
+  if (excludeId) filters._id = { $ne: excludeId };
+  return Animal.findOne(filters);
+};
+
 const normalizeGender = (gender) => {
   const value = String(gender || '').toUpperCase();
   if (value === 'MALE') return 'Male';
@@ -125,7 +153,19 @@ exports.createAnimal = async (req, res) => {
   try {
     const { code, name, species, gender, age, healthStatus, behavior, origin, area, status, notes, imageUrl = '' } = req.body;
 
-    const existingAnimal = await Animal.findOne({ code: code.toUpperCase() });
+    if (isBlank(code) || isBlank(name) || isBlank(species) || !area) {
+      return res.status(400).json({ message: 'code, name, species and area are required.' });
+    }
+
+    if (!isNonNegativeNumber(age)) {
+      return res.status(400).json({ message: 'Animal age must be a number greater than or equal to 0.' });
+    }
+
+    if (!isValidHttpUrl(imageUrl.trim())) {
+      return res.status(400).json({ message: 'Image URL must be a valid http or https URL.' });
+    }
+
+    const existingAnimal = await Animal.findOne({ code: code.toUpperCase().trim() });
     if (existingAnimal) {
       return res.status(400).json({ message: `Animal with code '${code}' already exists` });
     }
@@ -136,10 +176,15 @@ exports.createAnimal = async (req, res) => {
       return res.status(400).json({ message: 'Specified area does not exist' });
     }
 
+    const duplicateAnimalName = await findDuplicateAnimalName({ name, species, area });
+    if (duplicateAnimalName) {
+      return res.status(409).json({ message: 'Animal name already exists in the same species or area.' });
+    }
+
     const animal = await Animal.create({
-      code,
-      name,
-      species,
+      code: code.toUpperCase().trim(),
+      name: name.trim(),
+      species: species.trim(),
       gender: normalizeGender(gender),
       age,
       healthStatus: normalizeHealthStatus(healthStatus, status),
@@ -173,9 +218,29 @@ exports.updateAnimal = async (req, res) => {
 
     normalizeAnimalDoc(animal);
 
+    if (Object.prototype.hasOwnProperty.call(req.body, 'code') && isBlank(code)) {
+      return res.status(400).json({ message: 'Animal code is required.' });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'name') && isBlank(name)) {
+      return res.status(400).json({ message: 'Animal name is required.' });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'species') && isBlank(species)) {
+      return res.status(400).json({ message: 'Animal species is required.' });
+    }
+
+    if (!isNonNegativeNumber(age)) {
+      return res.status(400).json({ message: 'Animal age must be a number greater than or equal to 0.' });
+    }
+
+    if (typeof imageUrl === 'string' && !isValidHttpUrl(imageUrl.trim())) {
+      return res.status(400).json({ message: 'Image URL must be a valid http or https URL.' });
+    }
+
     // Check for duplicate code if it's being changed
-    if (code && code.toUpperCase() !== animal.code) {
-      const existingAnimal = await Animal.findOne({ code: code.toUpperCase() });
+    if (code && code.toUpperCase().trim() !== animal.code) {
+      const existingAnimal = await Animal.findOne({ code: code.toUpperCase().trim() });
       if (existingAnimal) {
         return res.status(400).json({ message: `Animal with code '${code}' already exists` });
       }
@@ -189,9 +254,22 @@ exports.updateAnimal = async (req, res) => {
       }
     }
 
-    animal.code = code || animal.code;
-    animal.name = name || animal.name;
-    animal.species = species || animal.species;
+    const nextName = name ? name.trim() : animal.name;
+    const nextSpecies = species ? species.trim() : animal.species;
+    const nextArea = area || animal.area;
+    const duplicateAnimalName = await findDuplicateAnimalName({
+      name: nextName,
+      species: nextSpecies,
+      area: nextArea,
+      excludeId: animal._id,
+    });
+    if (duplicateAnimalName) {
+      return res.status(409).json({ message: 'Animal name already exists in the same species or area.' });
+    }
+
+    animal.code = code ? code.toUpperCase().trim() : animal.code;
+    animal.name = name ? name.trim() : animal.name;
+    animal.species = species ? species.trim() : animal.species;
     animal.gender = gender ? normalizeGender(gender) : animal.gender;
     animal.age = age !== undefined ? age : animal.age;
     animal.healthStatus = healthStatus ? normalizeHealthStatus(healthStatus, status) : animal.healthStatus;

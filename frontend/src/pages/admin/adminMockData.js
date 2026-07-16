@@ -110,14 +110,14 @@ export const adminBookings = [
   {
     code: 'BOOK-1001',
     visitor: 'Vo Customer',
-    totalAmount: '320,000 VND',
+    totalAmount: '$320.00',
     status: 'CONFIRMED',
     visitDate: '2026-07-20',
   },
   {
     code: 'BOOK-1002',
     visitor: 'Vo Customer',
-    totalAmount: '300,000 VND',
+    totalAmount: '$300.00',
     status: 'PENDING',
     visitDate: '2026-07-27',
   },

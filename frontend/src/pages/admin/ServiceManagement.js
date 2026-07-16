@@ -3,6 +3,9 @@ import { serviceApi } from '../../services/api';
 import './ServiceManagement.css';
 import './AreaManagement.css';
 
+const isNonNegativeNumber = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
+const isPositiveNumber = (value) => Number.isFinite(Number(value)) && Number(value) > 0;
+
 const ServiceManagement = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +17,7 @@ const ServiceManagement = () => {
   const [editingService, setEditingService] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [formData, setFormData] = useState({
-    code: '', name: '', category: '', description: '', price: 0, duration: 0, isActive: true,
+    code: '', name: '', category: '', description: '', price: 0, duration: 1, isActive: true,
   });
 
   const fetchServices = useCallback(async () => {
@@ -48,7 +51,7 @@ const ServiceManagement = () => {
 
   const openCreateModal = () => {
     setEditingService(null);
-    setFormData({ code: '', name: '', category: '', description: '', price: 0, duration: 0, isActive: true });
+    setFormData({ code: '', name: '', category: '', description: '', price: 0, duration: 1, isActive: true });
     setShowModal(true);
     setError('');
   };
@@ -67,6 +70,23 @@ const ServiceManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const duplicateService = services.find((service) => {
+        const isSameService = editingService?._id === service._id;
+        return !isSameService && service.name?.trim().toLowerCase() === formData.name.trim().toLowerCase();
+      });
+
+      if (duplicateService) {
+        throw new Error('Service name already exists.');
+      }
+
+      if (!isNonNegativeNumber(formData.price)) {
+        throw new Error('Service price must be a number greater than or equal to 0.');
+      }
+
+      if (!isPositiveNumber(formData.duration)) {
+        throw new Error('Service duration must be greater than 0 minutes.');
+      }
+
       const submitData = { ...formData, price: parseFloat(formData.price) || 0, duration: parseInt(formData.duration) || 0 };
       if (editingService) {
         await serviceApi.update(editingService._id, submitData);
@@ -105,7 +125,7 @@ const ServiceManagement = () => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
   };
 
   return (
@@ -228,12 +248,12 @@ const ServiceManagement = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Giá (VNĐ)</label>
-                    <input type="number" min="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
+                    <label>Giá (USD)</label>
+                    <input type="number" min="0" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} />
                   </div>
                   <div className="form-group">
                     <label>Thời lượng (phút)</label>
-                    <input type="number" min="0" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} />
+                    <input type="number" min="1" value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} required />
                   </div>
                 </div>
                 <div className="form-group">
