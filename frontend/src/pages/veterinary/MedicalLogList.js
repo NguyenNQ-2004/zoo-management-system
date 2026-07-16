@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download } from 'lucide-react';
@@ -10,8 +11,7 @@ const MedicalLogList = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/vet/health-records'); // or a new endpoint for all logs
-        const json = await res.json();
+        const json = await vetApi.getHealthRecords();
         if (json.success && json.data && json.data.logs) {
           setLogs(json.data.logs);
         } else {

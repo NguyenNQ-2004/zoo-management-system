@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const vetController = require('../controllers/vetController');
+const { protect } = require('../middlewares/authMiddleware');
 
 // Routes for Veterinary module
+router.use(protect);
+
 router.get('/dashboard', vetController.getDashboardStats);
 router.get('/animals/health-status', vetController.getAnimalHealthStatus);
 router.get('/health-records', vetController.getHealthRecordsArchive);

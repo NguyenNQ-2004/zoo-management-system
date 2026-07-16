@@ -1,3 +1,4 @@
+import { vetApi } from '../../services/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Activity, AlertTriangle, Calendar, AlertOctagon } from 'lucide-react';
@@ -19,8 +20,7 @@ const UpdateHealthStatus = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/health`);
-        const json = await res.json();
+        const json = await vetApi.getAnimalHealthDetail(id);
         if (json.success) {
           setAnimal(json.data.animal);
           if (json.data.health) {
@@ -44,12 +44,8 @@ const UpdateHealthStatus = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:5000/api/vet/animals/${id}/health-status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
+      const res = await vetApi.updateAnimalHealthStatus(id, formData); res.ok = true;
+      if (res) {
         navigate(`/vet/health/${id}`);
       }
     } catch (error) {

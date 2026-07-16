@@ -1,5 +1,5 @@
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 const API_URL = API_BASE_URL;
 
 const getCurrentUser = () => {
@@ -166,6 +166,11 @@ export const api = {
     method: 'PUT',
     headers: getStaffHeaders(),
     body: JSON.stringify({ status, notes })
+  }),
+
+  createBooking: async (bookingData) => request('/user/bookings', {
+    method: 'POST',
+    body: JSON.stringify(bookingData)
   })
 };
 
@@ -204,6 +209,7 @@ export const serviceApi = {
 };
 
 export const adminApi = {
+  getDashboard: async () => request('/admin/dashboard'),
   getUsers: async () => request('/admin/users'),
   getUserById: async (id) => request(`/admin/users/${id}`),
   createUser: async (body) => request('/admin/users', {
@@ -250,17 +256,6 @@ export const adminApi = {
     method: 'DELETE',
   }),
   getTickets: async () => request('/admin/tickets'),
-  createTicket: async (body) => request('/admin/tickets', {
-    method: 'POST',
-    body: JSON.stringify(body),
-  }),
-  updateTicket: async (id, body) => request(`/admin/tickets/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(body),
-  }),
-  deleteTicket: async (id) => request(`/admin/tickets/${id}`, {
-    method: 'DELETE',
-  }),
   getServices: async () => request('/admin/services'),
   createService: async (body) => request('/admin/services', {
     method: 'POST',
@@ -273,10 +268,50 @@ export const adminApi = {
   deleteService: async (id) => request(`/admin/services/${id}`, {
     method: 'DELETE',
   }),
+  createTicket: async (body) => request('/admin/tickets', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  updateTicket: async (id, body) => request(`/admin/tickets/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  }),
+  deleteTicket: async (id) => request(`/admin/tickets/${id}`, {
+    method: 'DELETE',
+  }),
   getBookings: async () => request('/admin/bookings'),
   updateBookingStatus: async (id, body) => request(`/admin/bookings/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify(body),
   }),
   getReports: async () => request('/admin/reports'),
+};
+
+export const vetApi = {
+  getDashboard: async () => request('/vet/dashboard'),
+    getHealthRecords: async (limit) => request(`/vet/health-records${limit ? `?limit=${limit}` : ''}`),
+  getAnimalHealthStatus: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/vet/animals/health-status${query ? `?${query}` : ''}`);
+  },
+  getAnimalHealthDetail: async (id) => request(`/vet/animals/${id}/health`),
+  updateAnimalHealthStatus: async (id, body) => request(`/vet/animals/${id}/health-status`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  }),
+  createMedicalLog: async (id, body) => request(`/vet/animals/${id}/medical-logs`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  createTreatmentPlan: async (id, body) => request(`/vet/animals/${id}/treatments`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  getMedicalHistory: async (id) => request(`/vet/animals/${id}/medical-history`),
+  getAllTreatments: async () => request('/vet/treatments'),
+  getTreatmentDetail: async (id) => request(`/vet/treatments/${id}`),
+  updateTreatmentStatus: async (id, status, notes) => request(`/vet/treatments/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, notes }),
+  }),
 };
