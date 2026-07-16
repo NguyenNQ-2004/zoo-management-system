@@ -7,13 +7,14 @@ const TicketDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
-  const [profile, setProfile] = useState({ fullName: 'Sarah Jenkins' });
+  const [profile, setProfile] = useState({ fullName: '' });
 
   useEffect(() => {
-    const saved = localStorage.getItem('zoo_user_profile');
-    if (saved) {
-      setProfile(JSON.parse(saved));
-    }
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const savedProfile = JSON.parse(localStorage.getItem('zoo_user_profile') || '{}');
+    setProfile({
+      fullName: currentUser.fullName || savedProfile.fullName || ''
+    });
   }, []);
 
   useEffect(() => {

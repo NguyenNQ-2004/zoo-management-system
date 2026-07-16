@@ -5,18 +5,24 @@ import { useNavigate } from 'react-router-dom';
 const UserProfile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState({
-    fullName: 'Sarah Jenkins',
-    email: 'sarah.j@example.com',
-    phone: '+1 (555) 012-3456'
+    fullName: '',
+    email: '',
+    phone: ''
   });
+  const [role, setRole] = useState('USER');
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '' });
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('zoo_user_profile');
-    if (saved) {
-      setProfile(JSON.parse(saved));
-    }
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const savedProfile = JSON.parse(localStorage.getItem('zoo_user_profile') || '{}');
+    
+    setProfile({
+      fullName: currentUser.fullName || savedProfile.fullName || '',
+      email: currentUser.email || savedProfile.email || '',
+      phone: savedProfile.phone || currentUser.phone || ''
+    });
+    setRole(currentUser.role || 'Visitor');
   }, []);
 
   const handleChange = (e) => {
@@ -26,16 +32,27 @@ const UserProfile = () => {
 
   const handleSave = () => {
     localStorage.setItem('zoo_user_profile', JSON.stringify(profile));
+    
+    // Also optionally update currentUser locally if they change name/email
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    localStorage.setItem('currentUser', JSON.stringify({
+      ...currentUser,
+      fullName: profile.fullName,
+      email: profile.email
+    }));
+    
     setIsEditing(false);
   };
 
   const handleDiscard = () => {
-    const saved = localStorage.getItem('zoo_user_profile');
-    if (saved) {
-      setProfile(JSON.parse(saved));
-    } else {
-      setProfile({ fullName: 'Sarah Jenkins', email: 'sarah.j@example.com', phone: '+1 (555) 012-3456' });
-    }
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const savedProfile = JSON.parse(localStorage.getItem('zoo_user_profile') || '{}');
+    
+    setProfile({
+      fullName: currentUser.fullName || savedProfile.fullName || '',
+      email: currentUser.email || savedProfile.email || '',
+      phone: savedProfile.phone || currentUser.phone || ''
+    });
     setIsEditing(false);
   };
 
@@ -117,7 +134,7 @@ const UserProfile = () => {
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4b5563', marginBottom: '8px' }}>Role</label>
               <div style={{ position: 'relative' }}>
-                <input type="text" readOnly value="Visitor" style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#f9fafb', fontSize: '15px', color: '#4b5563', boxSizing: 'border-box' }} />
+                <input type="text" readOnly value={role} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#f9fafb', fontSize: '15px', color: '#4b5563', boxSizing: 'border-box' }} />
                 <Lock size={16} color="#9ca3af" style={{ position: 'absolute', right: '15px', top: '15px' }} />
               </div>
             </div>

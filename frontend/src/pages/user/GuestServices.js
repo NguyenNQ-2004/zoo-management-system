@@ -16,7 +16,16 @@ const GuestServices = () => {
     const fetchServices = async () => {
       try {
         const data = await serviceApi.getAll();
-        const mapped = data.map((svc) => ({
+        const images = [
+          'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80',
+          'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=800&q=80',
+          'https://images.unsplash.com/photo-1500694215980-df8385bfab02?w=800&q=80',
+          'https://images.unsplash.com/photo-1520645521318-f03a712f0e67?w=800&q=80',
+          'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=800&q=80',
+          'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?w=800&q=80'
+        ];
+        
+        const mapped = data.map((svc, index) => ({
           id: svc._id,
           title: svc.name,
           price: svc.price === 0 ? 'Free' : `$${svc.price.toFixed(2)}`,
@@ -25,7 +34,7 @@ const GuestServices = () => {
           schedule: svc.duration > 0 ? `${svc.duration} mins` : 'Flexible',
           location: 'Sanctuary Area',
           badge: svc.isActive ? null : { text: 'Currently Unavailable', type: 'red' },
-          image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          image: images[index % images.length]
         }));
         setServices(mapped);
       } catch (err) {

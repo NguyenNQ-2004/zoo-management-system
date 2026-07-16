@@ -1,46 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, DollarSign, MapPin } from 'lucide-react';
-import './ZooAreaDetail.css'; // Reusing area hero styles
+import './ZooAreaDetail.css';
+import { serviceApi } from '../../services/api';
 
 const ServiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const servicesData = {
-    '1': {
-      name: 'Safari Guided Tour',
-      category: 'Tours',
-      desc: 'Join our expert guides for an immersive 2-hour tour through our largest habitats. Get exclusive access to behind-the-scenes areas and learn about our conservation efforts from the professionals.',
-      price: '$25/person',
-      availability: 'Daily: 10AM, 2PM',
-      location: 'Departs from Main Plaza',
-      duration: '2 Hours',
-      image: 'https://images.unsplash.com/photo-1544971587-b842c27f8e14?w=1200&q=80'
-    },
-    '2': {
-      name: 'Electric Scooter Rental',
-      category: 'Rentals',
-      desc: 'Navigate the zoo with ease. Our eco-friendly scooters are available for full or half-day rentals, perfect for exploring our expansive 100-acre sanctuary without fatigue.',
-      price: '$30/day',
-      availability: 'Available from 08:00 AM to 05:00 PM',
-      location: 'Main Gate Rental Kiosk',
-      duration: 'Full Day or Half Day',
-      image: 'https://images.unsplash.com/photo-1593883733059-e9185a7322d7?w=1200&q=80'
-    },
-    '3': {
-      name: 'Premium Dining Package',
-      category: 'Dining',
-      desc: 'Enjoy a 3-course meal at the Canopy Restaurant with panoramic views of the Rainforest exhibit. Includes your choice of appetizer, main course, dessert, and non-alcoholic beverages.',
-      price: '$45/person',
-      availability: '11:00 AM - 08:00 PM',
-      location: 'Canopy Restaurant (Zone B)',
-      duration: 'Flexible',
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80'
-    }
-  };
+  const [service, setService] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const service = servicesData[id] || servicesData['1'];
+  useEffect(() => {
+    const fetchService = async () => {
+      try {
+        const services = await serviceApi.getAll();
+        const found = services.find(s => s._id === id);
+
+        const images = [
+          'https://images.unsplash.com/photo-1544971587-b842c27f8e14?w=1200&q=80',
+          'https://images.unsplash.com/photo-1593883733059-e9185a7322d7?w=1200&q=80',
+          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80',
+          'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&q=80'
+        ];
+        
+        if (found) {
+          const imgIndex = parseInt(id.slice(-4), 16) % images.length || 0;
+          setService({
+            ...found,
+            image: images[imgIndex],
+            category: found.category || 'Service',
+            desc: found.description || 'Enjoy our wonderful services designed for your best experience.',
+            price: found.price ? `$${found.price}` : 'Free',
+            availability: found.isActive ? 'Available' : 'Currently Unavailable',
+            duration: found.duration ? `${found.duration} mins` : 'Flexible',
+            location: 'Main Zoo Area'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch service detail', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchService();
+  }, [id]);
+
+  if (loading) return <div style={{ padding: '80px', textAlign: 'center' }}>Loading...</div>;
+  if (!service) return <div style={{ padding: '80px', textAlign: 'center' }}>Service not found.</div>;
 
   return (
     <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh', paddingBottom: '80px' }}>
@@ -74,8 +81,8 @@ const ServiceDetail = () => {
             <div className="info-row">
               <Clock size={18} color="#666"/>
               <div>
-                <div className="info-label">Availability</div>
-                <div className="info-val">{service.availability}</div>
+                <div className="info-label">Availability / Duration</div>
+                <div className="info-val">{service.availability} - {service.duration}</div>
               </div>
             </div>
             <div className="info-row">

@@ -1,50 +1,68 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Map, Clock } from 'lucide-react';
 import './ZooAreaDetail.css';
-import './AnimalDetail.css'; // For shared hero styles
+import './AnimalDetail.css';
+import { areaApi, animalApi } from '../../services/api';
 
 const ZooAreaDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const areasData = {
-    '1': {
-      name: 'Tropical Rainforest',
-      status: 'Open',
-      image: 'https://images.unsplash.com/photo-1596324121712-5bbc14482174?w=1200&q=80',
-      description: 'Step into a lush, humid environment filled with exotic plants and animals. Experience the dense canopy and discover the incredible biodiversity of the world\'s tropical rainforests.',
-      schedule: '09:00 AM - 05:00 PM',
-      size: '15 Acres',
-      animals: [
-        { id: 1, name: 'Amur Leopard', image: 'https://images.unsplash.com/photo-1518709779341-56cf4535e94b?w=400&q=80' },
-        { id: 3, name: 'Red Panda', image: 'https://images.unsplash.com/photo-1542880941-18edbfce011a?w=400&q=80' }
-      ]
-    },
-    '2': {
-      name: 'Savanna Plains',
-      status: 'Open',
-      image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&q=80',
-      description: 'A vast open-range habitat designed to replicate the African plains. Watch as herds roam free and predators rest under the acacia trees.',
-      schedule: '08:00 AM - 06:00 PM',
-      size: '45 Acres',
-      animals: [
-        { id: 2, name: 'Bengal Tiger', image: 'https://images.unsplash.com/photo-1561731216-c3a428c4e0f4?w=400&q=80' },
-        { id: 4, name: 'African Elephant', image: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=400&q=80' }
-      ]
-    },
-    '3': {
-      name: 'Aquatic Center',
-      status: 'Closed for Maintenance',
-      image: 'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?w=1200&q=80',
-      description: 'Deep water habitats showcasing marine life in highly specialized, controlled aquatic environments.',
-      schedule: 'Currently Closed',
-      size: '8 Acres',
-      animals: []
-    }
-  };
+  const [area, setArea] = useState(null);
+  const [animals, setAnimals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const area = areasData[id] || areasData['1'];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [areaData, animalsData] = await Promise.all([
+          areaApi.getById(id),
+          animalApi.getAll({ area: id })
+        ]);
+
+        const areaImages = [
+          'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&q=80',
+          'https://images.unsplash.com/photo-1596324121712-5bbc14482174?w=1200&q=80',
+          'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?w=1200&q=80'
+        ];
+        // Hash id to pick image
+        const imgIndex = parseInt(id.slice(-4), 16) % areaImages.length || 0;
+
+        setArea({
+          ...areaData,
+          image: areaImages[imgIndex]
+        });
+
+        const animalImages = [
+          'https://images.unsplash.com/photo-1518709779341-56cf4535e94b?w=400&q=80',
+          'https://images.unsplash.com/photo-1561731216-c3a428c4e0f4?w=400&q=80',
+          'https://images.unsplash.com/photo-1542880941-18edbfce011a?w=400&q=80',
+          'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=400&q=80',
+          'https://images.unsplash.com/photo-1580428581643-421f1c7f5c53?w=400&q=80',
+          'https://images.unsplash.com/photo-1540126034813-121bf29033d2?w=400&q=80'
+        ];
+
+        setAnimals(animalsData.map((a, idx) => ({
+          ...a,
+          image: animalImages[idx % animalImages.length]
+        })));
+      } catch (error) {
+        console.error('Failed to fetch area data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return <div style={{ padding: '80px', textAlign: 'center' }}>Loading...</div>;
+  }
+
+  if (!area) {
+    return <div style={{ padding: '80px', textAlign: 'center' }}>Area not found.</div>;
+  }
 
   return (
     <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh', paddingBottom: '80px' }}>
@@ -54,7 +72,9 @@ const ZooAreaDetail = () => {
           <ArrowLeft size={20} /> Back
         </button>
         <div className="area-hero-content">
-          <span className="badge-status open">{area.status}</span>
+          <span className={`badge-status ${area.status === 'Open' ? 'open' : ''}`} style={{ backgroundColor: area.status === 'Open' ? '#dcfce7' : '#fee2e2', color: area.status === 'Open' ? '#166534' : '#991b1b' }}>
+            {area.status}
+          </span>
           <h1>{area.name}</h1>
         </div>
       </div>
@@ -62,16 +82,16 @@ const ZooAreaDetail = () => {
       <div className="area-content-wrapper">
         <div className="area-main">
           <h2>About {area.name}</h2>
-          <p className="area-desc">{area.description}</p>
+          <p className="area-desc">{area.description || 'Discover the amazing wildlife in this beautifully crafted habitat.'}</p>
           
           <h3 style={{ marginTop: '40px', marginBottom: '20px' }}>Animals in this Area</h3>
           <div className="area-animals-grid">
-            {area.animals.map(a => (
-              <div key={a.id} className="area-animal-card" onClick={() => navigate(`/user/animals/${a.id}`)}>
+            {animals.length > 0 ? animals.map(a => (
+              <div key={a._id} className="area-animal-card" onClick={() => navigate(`/user/animals/${a._id}`)}>
                 <img src={a.image} alt={a.name} />
-                <div className="card-name">{a.name}</div>
+                <div className="card-name">{a.name} ({a.species})</div>
               </div>
-            ))}
+            )) : <p>No animals found in this area.</p>}
           </div>
         </div>
 
@@ -82,14 +102,14 @@ const ZooAreaDetail = () => {
               <Clock size={18} color="#666"/>
               <div>
                 <div className="info-label">Operating Hours</div>
-                <div className="info-val">{area.schedule}</div>
+                <div className="info-val">08:00 AM - 06:00 PM</div>
               </div>
             </div>
             <div className="info-row">
               <Map size={18} color="#666"/>
               <div>
-                <div className="info-label">Area Size</div>
-                <div className="info-val">{area.size}</div>
+                <div className="info-label">Capacity</div>
+                <div className="info-val">{area.capacity || 0}</div>
               </div>
             </div>
           </div>

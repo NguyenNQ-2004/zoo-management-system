@@ -12,14 +12,15 @@ const BookingPage = () => {
   const [selectedDate, setSelectedDate] = useState('Oct 24, 2024');
   const [ticketType, setTicketType] = useState('General Admission');
   const [createdTicketId, setCreatedTicketId] = useState('');
-  const [profile, setProfile] = useState({ fullName: 'Sarah Jenkins' });
+  const [profile, setProfile] = useState({ fullName: '' });
   const [addons, setAddons] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('zoo_user_profile');
-    if (saved) {
-      setProfile(JSON.parse(saved));
-    }
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const savedProfile = JSON.parse(localStorage.getItem('zoo_user_profile') || '{}');
+    setProfile({
+      fullName: currentUser.fullName || savedProfile.fullName || ''
+    });
   }, []);
 
   const handleAddonToggle = (addon) => {

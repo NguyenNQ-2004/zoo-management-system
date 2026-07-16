@@ -15,14 +15,22 @@ const ExploreZoo = () => {
     const fetchAreas = async () => {
       try {
         const data = await areaApi.getAll();
-        const mapped = data.map(area => ({
+        const images = [
+          'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80',
+          'https://images.unsplash.com/photo-1596324121712-5bbc14482174?w=800&q=80',
+          'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?w=800&q=80',
+          'https://images.unsplash.com/photo-1518709779341-56cf4535e94b?w=800&q=80',
+          'https://images.unsplash.com/photo-1542880941-18edbfce011a?w=800&q=80'
+        ];
+
+        const mapped = data.map((area, index) => ({
           id: area._id,
           title: area.name,
           desc: area.description || 'Discover our magnificent animals in a beautifully curated habitat.',
           species: area.capacity || 0,
           zone: `Zone ${area.code}`,
           status: area.status, // 'Open', 'Maintenance', 'Closed'
-          image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+          image: images[index % images.length]
         }));
         setExhibits(mapped);
       } catch (err) {
