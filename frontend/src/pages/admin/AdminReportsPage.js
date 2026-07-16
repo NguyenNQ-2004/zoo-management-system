@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../services/api';
 
-const formatMoney = (value) => `${Number(value || 0).toLocaleString('vi-VN')} VND`;
+const formatMoney = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 const formatDate = (value) => new Date(value).toLocaleDateString('en-GB');
 
 const StatusBreakdown = ({ title, rows }) => (

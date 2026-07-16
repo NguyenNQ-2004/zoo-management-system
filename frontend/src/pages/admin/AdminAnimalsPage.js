@@ -35,6 +35,27 @@ const toDateInput = (value) => {
   return new Date(value).toISOString().slice(0, 10);
 };
 
+const todayInput = () => new Date().toISOString().slice(0, 10);
+
+const isFutureDate = (value) => {
+  if (!value) return false;
+  const selectedDate = new Date(value);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  return Number.isNaN(selectedDate.getTime()) || selectedDate > today;
+};
+
+const isValidHttpUrl = (value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch (error) {
+    return false;
+  }
+};
+
 const formatDate = (value) => {
   if (!value) return 'N/A';
   return new Date(value).toLocaleDateString('en-GB');
@@ -216,6 +237,42 @@ const AdminAnimalsPage = () => {
     setMessage('');
 
     try {
+      const duplicateAnimal = animals.find((animal) => {
+        const isSameAnimal = modalMode === 'edit' && selectedAnimal?._id === animal._id;
+        const sameName = animal.name?.trim().toLowerCase() === formData.name.trim().toLowerCase();
+        const sameSpecies = animal.species?.trim().toLowerCase() === formData.species.trim().toLowerCase();
+        const sameArea = animal.area?._id === formData.area;
+        return !isSameAnimal && sameName && (sameSpecies || sameArea);
+      });
+
+      if (duplicateAnimal) {
+        throw new Error('Animal name already exists in the same species or area.');
+      }
+
+      if (!formData.area) {
+        throw new Error('Area is required.');
+      }
+
+      if (formData.imageUrl && !isValidHttpUrl(formData.imageUrl.trim())) {
+        throw new Error('Image URL must be a valid http or https URL.');
+      }
+
+      if (isFutureDate(formData.dateOfBirth)) {
+        throw new Error('Date of birth cannot be in the future.');
+      }
+
+      if (formData.health.lastCheckDate && isFutureDate(formData.health.lastCheckDate)) {
+        throw new Error('Health check date cannot be in the future.');
+      }
+
+      if (formData.health.weightKg !== '' && (!Number.isFinite(Number(formData.health.weightKg)) || Number(formData.health.weightKg) < 0)) {
+        throw new Error('Animal weight must be greater than or equal to 0.');
+      }
+
+      if (formData.health.temperatureC !== '' && !Number.isFinite(Number(formData.health.temperatureC))) {
+        throw new Error('Animal temperature must be a valid number.');
+      }
+
       const payload = buildPayload();
 
       if (modalMode === 'create') {
@@ -450,7 +507,7 @@ const AdminAnimalsPage = () => {
                 <label className="admin-field admin-field-full"><span>Image URL</span><input name="imageUrl" value={formData.imageUrl} onChange={handleFormChange} placeholder="https://loremflickr.com/900/620/lion,wildlife" /></label>
                 <label className="admin-field"><span>Scientific name</span><input name="scientificName" value={formData.scientificName} onChange={handleFormChange} /></label>
                 <label className="admin-field"><span>Gender</span><select name="gender" value={formData.gender} onChange={handleFormChange}>{genderOptions.map((gender) => <option key={gender} value={gender}>{gender}</option>)}</select></label>
-                <label className="admin-field"><span>Date of birth</span><input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleFormChange} /></label>
+                <label className="admin-field"><span>Date of birth</span><input name="dateOfBirth" type="date" max={todayInput()} value={formData.dateOfBirth} onChange={handleFormChange} /></label>
                 <label className="admin-field"><span>Status</span><select name="status" value={formData.status} onChange={handleFormChange}>{animalStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
                 <label className="admin-field"><span>Area</span><select name="area" value={formData.area} onChange={handleFormChange} required>{areas.map((area) => <option key={area._id} value={area._id}>{area.name}</option>)}</select></label>
                 <label className="admin-field"><span>Caretaker</span><select name="caretaker" value={formData.caretaker} onChange={handleFormChange}><option value="">Unassigned</option>{staff.map((member) => <option key={member._id} value={member._id}>{member.fullName}</option>)}</select></label>
@@ -464,7 +521,7 @@ const AdminAnimalsPage = () => {
                 <label className="admin-field"><span>Temperature C</span><input name="health.temperatureC" type="number" step="0.1" value={formData.health.temperatureC} onChange={handleFormChange} /></label>
                 <label className="admin-field"><span>Appetite</span><select name="health.appetite" value={formData.health.appetite} onChange={handleFormChange}>{appetiteOptions.map((appetite) => <option key={appetite} value={appetite}>{appetite}</option>)}</select></label>
                 <label className="admin-field"><span>Condition</span><select name="health.condition" value={formData.health.condition} onChange={handleFormChange}>{conditionOptions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}</select></label>
-                <label className="admin-field admin-field-full"><span>Health check date</span><input name="health.lastCheckDate" type="date" value={formData.health.lastCheckDate} onChange={handleFormChange} /></label>
+                <label className="admin-field admin-field-full"><span>Health check date</span><input name="health.lastCheckDate" type="date" max={todayInput()} value={formData.health.lastCheckDate} onChange={handleFormChange} /></label>
                 <label className="admin-field admin-field-full"><span>Animal notes</span><textarea name="notes" rows="3" value={formData.notes} onChange={handleFormChange} /></label>
                 <label className="admin-field admin-field-full"><span>Health notes</span><textarea name="health.notes" rows="3" value={formData.health.notes} onChange={handleFormChange} /></label>
 
