@@ -53,7 +53,9 @@ const VetLayout = () => {
         {/* Navigation */}
         <nav style={{ padding: '20px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== '/vet' && location.pathname.startsWith(item.path));
+            const isActive = location.pathname === item.path || 
+                             (item.path !== '/vet' && location.pathname.startsWith(item.path)) ||
+                             (item.path === '/vet/health' && location.pathname.startsWith('/vet/archive'));
             return (
               <Link 
                 key={item.path}
@@ -78,6 +80,7 @@ const VetLayout = () => {
           })}
 
           <button 
+            onClick={() => navigate('/vet/notifications?new=true')}
             style={{
               marginTop: '20px',
               backgroundColor: '#A7F3D0', // Light green

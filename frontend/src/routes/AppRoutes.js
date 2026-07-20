@@ -40,6 +40,8 @@ import TreatmentPlanList from '../pages/veterinary/TreatmentPlanList';
 import TreatmentPlanForm from '../pages/veterinary/TreatmentPlanForm';
 import TreatmentDetail from '../pages/veterinary/TreatmentDetail';
 import MedicalHistory from '../pages/veterinary/MedicalHistory';
+import VetNotifications from '../pages/veterinary/VetNotifications';
+import VetSettings from '../pages/veterinary/VetSettings';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AreaManagement from '../pages/admin/AreaManagement';
 import AnimalManagement from '../pages/admin/AnimalManagement';
@@ -111,6 +113,8 @@ const AppRoutes = () => {
           <Route path="treatments/:id" element={<TreatmentDetail />} />
           <Route path="history" element={<MedicalHistory />} />
           <Route path="history/:id" element={<MedicalHistory />} />
+          <Route path="notifications" element={<VetNotifications />} />
+          <Route path="settings" element={<VetSettings />} />
 
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Veterinary" functions={[]} />} />
         </Route>

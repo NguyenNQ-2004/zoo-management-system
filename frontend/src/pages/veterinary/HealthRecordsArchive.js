@@ -13,6 +13,8 @@ const HealthRecordsArchive = () => {
   const [cards, setCards] = useState([]);
   const [logs, setLogs] = useState([]);
   const [availableAreas, setAvailableAreas] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableVets, setAvailableVets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRecords = async () => {
@@ -30,8 +32,14 @@ const HealthRecordsArchive = () => {
       if (data) {
         setCards(data.cards || []);
         setLogs(data.logs || []);
-        const areas = Array.from(new Set((data.logs || []).map((record) => record.area).filter(Boolean)));
-        setAvailableAreas(areas);
+        if (availableAreas.length === 0 && !area && !category && !vetId && !searchTerm && !dateRange) {
+          const areas = Array.from(new Set((data.logs || []).map((record) => record.area).filter(Boolean)));
+          setAvailableAreas(areas);
+          const categories = Array.from(new Set((data.logs || []).map((record) => record.type).filter(Boolean)));
+          setAvailableCategories(categories);
+          const vets = Array.from(new Set((data.logs || []).map((record) => record.vet).filter(Boolean)));
+          setAvailableVets(vets);
+        }
       }
     } catch (error) {
       console.error('Error fetching health records:', error);
@@ -113,9 +121,9 @@ const HealthRecordsArchive = () => {
               value={category} onChange={(e) => setCategory(e.target.value)}
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px', backgroundColor: 'white', outline: 'none' }}>
               <option value="">All Categories</option>
-              <option value="Routine Checkup">Routine Checkup</option>
-              <option value="Surgery">Surgery</option>
-              <option value="Vaccination">Vaccination</option>
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
             </select>
           </div>
           
@@ -137,9 +145,9 @@ const HealthRecordsArchive = () => {
               value={vetId} onChange={(e) => setVetId(e.target.value)}
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '14px', backgroundColor: 'white', outline: 'none' }}>
               <option value="">Any Personnel</option>
-              <option value="dr_thorne">Dr. A. Thorne</option>
-              <option value="dr_vance">Dr. E. Vance</option>
-              <option value="dr_holloway">Dr. M. Holloway</option>
+              {availableVets.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
             </select>
           </div>
 

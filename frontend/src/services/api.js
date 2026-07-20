@@ -314,4 +314,12 @@ export const vetApi = {
     method: 'PUT',
     body: JSON.stringify({ status, notes }),
   }),
+  getNotifications: async () => request('/vet/notifications'),
+  createReport: async (body) => request('/vet/reports', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  markNotificationRead: async (id) => request(`/vet/notifications/${id}/read`, {
+    method: 'PUT',
+  }),
 };

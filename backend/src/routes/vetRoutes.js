@@ -10,6 +10,11 @@ router.get('/dashboard', vetController.getDashboardStats);
 router.get('/animals/health-status', vetController.getAnimalHealthStatus);
 router.get('/health-records', vetController.getHealthRecordsArchive);
 
+// Notifications and Reports
+router.get('/notifications', vetController.getNotifications);
+router.post('/reports', vetController.createReport);
+router.put('/notifications/:id/read', vetController.markNotificationRead);
+
 // Animal specific routes
 router.get('/animals/:id/health', vetController.getAnimalHealthDetail);
 router.put('/animals/:id/health-status', vetController.updateAnimalHealthStatus);

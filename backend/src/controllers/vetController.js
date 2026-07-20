@@ -3,6 +3,7 @@ const Animal = require('../models/Animal');
 const AnimalHealth = require('../models/AnimalHealth');
 const MedicalLog = require('../models/MedicalLog');
 const Treatment = require('../models/Treatment');
+const Notification = require('../models/Notification');
 
 // Get dashboard stats (For Task 46)
 exports.getDashboardStats = async (req, res) => {
@@ -15,14 +16,31 @@ exports.getDashboardStats = async (req, res) => {
 
     // Mock trend data or calculate from DB (simplified for now)
     const trends = [
-      { name: 'Mon', healthy: healthyCount - 5, treatment: treatmentCount + 2 },
-      { name: 'Tue', healthy: healthyCount - 3, treatment: treatmentCount + 1 },
-      { name: 'Wed', healthy: healthyCount - 1, treatment: treatmentCount },
-      { name: 'Thu', healthy: healthyCount + 2, treatment: treatmentCount - 1 },
-      { name: 'Fri', healthy: healthyCount + 1, treatment: treatmentCount },
-      { name: 'Sat', healthy: healthyCount + 3, treatment: treatmentCount - 2 },
-      { name: 'Sun', healthy: healthyCount, treatment: treatmentCount },
+      { name: 'Mon', healthy: Math.max(0, healthyCount - 5), treatment: Math.max(0, treatmentCount + 2) },
+      { name: 'Tue', healthy: Math.max(0, healthyCount - 3), treatment: Math.max(0, treatmentCount + 1) },
+      { name: 'Wed', healthy: Math.max(0, healthyCount - 1), treatment: Math.max(0, treatmentCount) },
+      { name: 'Thu', healthy: Math.max(0, healthyCount + 2), treatment: Math.max(0, treatmentCount - 1) },
+      { name: 'Fri', healthy: Math.max(0, healthyCount + 1), treatment: Math.max(0, treatmentCount) },
+      { name: 'Sat', healthy: Math.max(0, healthyCount + 3), treatment: Math.max(0, treatmentCount - 2) },
+      { name: 'Sun', healthy: Math.max(0, healthyCount), treatment: Math.max(0, treatmentCount) },
     ];
+
+    // Generate 30 days of mock trend data
+    const trends30Days = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dayName = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      // Create some realistic looking variations based on the real counts
+      const hOffset = Math.floor(Math.sin(i * 0.5) * 8); 
+      const tOffset = Math.floor(Math.cos(i * 0.5) * 4);
+      trends30Days.push({
+        name: dayName,
+        healthy: Math.max(0, healthyCount + hOffset),
+        treatment: Math.max(0, treatmentCount + tOffset)
+      });
+    }
 
     // Critical watchlist
     const criticalHealths = await AnimalHealth.find({ condition: 'CRITICAL' })
@@ -50,6 +68,7 @@ exports.getDashboardStats = async (req, res) => {
           critical: criticalCount
         },
         trends,
+        trends30Days,
         watchlist
       }
     });
@@ -175,6 +194,7 @@ exports.getHealthRecordsArchive = async (req, res) => {
       date: new Date(log.visitDate || log.createdAt).toLocaleDateString(),
       vet: log.vet ? log.vet.fullName : 'Dr. Unknown',
       status: log.animal?.status || 'HEALTHY',
+      area: log.animal?.area?.name || 'Unknown',
       image: `https://ui-avatars.com/api/?name=${log.animal?.name || 'Unknown'}&background=random`,
       procedure: log.diagnosis || 'Routine Procedure'
     }));
@@ -451,6 +471,70 @@ exports.getMedicalHistory = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching medical history:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// --- Notifications & Reports ---
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({
+      $or: [{ targetRole: 'VET' }, { targetRole: 'ALL' }, { sender: req.user?._id }]
+    }).sort({ createdAt: -1 }).populate('animal', 'name code').populate('sender', 'fullName role');
+
+    res.status(200).json({
+      success: true,
+      data: notifications
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.createReport = async (req, res) => {
+  try {
+    const { title, message, priority, targetRole, animalId } = req.body;
+    
+    if (!title || !message) {
+      return res.status(400).json({ success: false, message: 'Title and message are required' });
+    }
+
+    const report = new Notification({
+      title,
+      message,
+      type: 'REPORT',
+      priority: priority || 'NORMAL',
+      targetRole: targetRole || 'ALL',
+      animal: animalId || undefined,
+      sender: req.user?._id
+    });
+
+    await report.save();
+    
+    res.status(201).json({
+      success: true,
+      data: report
+    });
+  } catch (error) {
+    console.error('Error creating report:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.markNotificationRead = async (req, res) => {
+  try {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.id,
+      { read: true },
+      { new: true }
+    );
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    res.status(200).json({ success: true, data: notification });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

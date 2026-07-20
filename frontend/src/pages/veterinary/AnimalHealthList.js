@@ -30,8 +30,10 @@ const AnimalHealthList = () => {
         const response = await vetApi.getAnimalHealthStatus(params);
         const data = response.data || response;
         setAnimals(Array.isArray(data) ? data : []);
-        const areas = Array.from(new Set((Array.isArray(data) ? data : []).map((animal) => animal.area).filter(Boolean)));
-        setAvailableAreas(areas);
+        if (availableAreas.length === 0 && !areaFilter && !statusFilter && !searchTerm) {
+          const areas = Array.from(new Set((Array.isArray(data) ? data : []).map((animal) => animal.area).filter(Boolean)));
+          setAvailableAreas(areas);
+        }
       } catch (error) {
         console.error('Error fetching animals:', error);
         setAnimals([]);
