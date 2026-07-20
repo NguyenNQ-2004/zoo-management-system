@@ -6,6 +6,7 @@ const priorities = ['LOW', 'MEDIUM', 'HIGH'];
 const statuses = ['TODO', 'IN_PROGRESS', 'DONE'];
 const filterStatuses = ['ALL', ...statuses];
 const assignableRoles = ['STAFF', 'VET'];
+const workloadOpenTaskLimit = 5;
 
 const emptyTaskForm = {
   title: '',
@@ -17,6 +18,16 @@ const emptyTaskForm = {
   animal: '',
   dueDate: '',
   status: 'TODO',
+};
+
+const emptyBulkTaskRow = {
+  title: '',
+  taskType: 'CARE',
+  priority: 'MEDIUM',
+  assignedTo: '',
+  area: '',
+  animal: '',
+  dueDate: '',
 };
 
 const toDateTimeInput = (value) => {
@@ -47,6 +58,28 @@ const formatDateTime = (value) => {
   });
 };
 
+const isTaskOverdue = (task) => task.status !== 'DONE' && task.dueDate && new Date(task.dueDate) < new Date();
+
+const buildTaskStats = (staffId, tasks) => {
+  const memberTasks = tasks.filter((task) => task.assignedTo?._id === staffId);
+  const todo = memberTasks.filter((task) => task.status === 'TODO').length;
+  const inProgress = memberTasks.filter((task) => task.status === 'IN_PROGRESS').length;
+  const done = memberTasks.filter((task) => task.status === 'DONE').length;
+  const overdue = memberTasks.filter(isTaskOverdue).length;
+  const open = todo + inProgress;
+
+  return {
+    total: memberTasks.length,
+    todo,
+    inProgress,
+    done,
+    open,
+    overdue,
+    workloadScore: open + overdue,
+    isOverloaded: open + overdue >= workloadOpenTaskLimit,
+  };
+};
+
 const AdminAssignmentsPage = () => {
   const [tasks, setTasks] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -59,9 +92,11 @@ const AdminAssignmentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [assigneeFilter, setAssigneeFilter] = useState('ALL');
+  const [areaFilter, setAreaFilter] = useState('ALL');
   const [modalMode, setModalMode] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [formData, setFormData] = useState(emptyTaskForm);
+  const [bulkRows, setBulkRows] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   const currentUser = (() => {
@@ -117,22 +152,32 @@ const AdminAssignmentsPage = () => {
         task.animal?.name?.toLowerCase().includes(search);
       const matchesStatus = statusFilter === 'ALL' || task.status === statusFilter;
       const matchesAssignee = assigneeFilter === 'ALL' || task.assignedTo?._id === assigneeFilter;
+      const matchesArea = areaFilter === 'ALL' || task.area?._id === areaFilter;
 
-      return matchesSearch && matchesStatus && matchesAssignee;
+      return matchesSearch && matchesStatus && matchesAssignee && matchesArea;
     });
-  }, [tasks, searchTerm, statusFilter, assigneeFilter]);
+  }, [tasks, searchTerm, statusFilter, assigneeFilter, areaFilter]);
+
+  const staffWorkload = useMemo(() => {
+    return staff.map((member) => ({
+      ...member,
+      taskStats: buildTaskStats(member._id, tasks),
+    })).sort((a, b) => b.taskStats.workloadScore - a.taskStats.workloadScore);
+  }, [staff, tasks]);
 
   const summary = {
     total: tasks.length,
     todo: tasks.filter((task) => task.status === 'TODO').length,
     inProgress: tasks.filter((task) => task.status === 'IN_PROGRESS').length,
     done: tasks.filter((task) => task.status === 'DONE').length,
+    overloaded: staffWorkload.filter((member) => member.taskStats.isOverloaded).length,
   };
 
   const closeModal = () => {
     setModalMode(null);
     setSelectedTask(null);
     setFormData(emptyTaskForm);
+    setBulkRows([]);
   };
 
   const openCreateModal = () => {
@@ -145,6 +190,18 @@ const AdminAssignmentsPage = () => {
       animal: '',
     });
     setModalMode('create');
+  };
+
+  const openBulkModal = () => {
+    setMessage('');
+    setSelectedTask(null);
+    const defaultRow = {
+      ...emptyBulkTaskRow,
+      assignedTo: staffWorkload.find((member) => !member.taskStats.isOverloaded)?._id || staff[0]?._id || '',
+      area: areaFilter !== 'ALL' ? areaFilter : areas[0]?._id || '',
+    };
+    setBulkRows([defaultRow, { ...defaultRow, title: '' }, { ...defaultRow, title: '' }]);
+    setModalMode('bulk');
   };
 
   const openEditModal = (task) => {
@@ -171,12 +228,44 @@ const AdminAssignmentsPage = () => {
     }));
   };
 
+  const handleBulkRowChange = (index, field, value) => {
+    setBulkRows((current) => current.map((row, rowIndex) => (
+      rowIndex === index ? { ...row, [field]: value } : row
+    )));
+  };
+
+  const addBulkRow = () => {
+    const template = bulkRows[bulkRows.length - 1] || emptyBulkTaskRow;
+    setBulkRows((current) => [...current, { ...template, title: '' }]);
+  };
+
+  const removeBulkRow = (index) => {
+    setBulkRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
+  };
+
   const buildTaskPayload = () => ({
     ...formData,
     assignedBy: adminUser?._id,
     area: formData.area || null,
     animal: formData.animal || null,
     dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : '',
+  });
+
+  const selectedAssigneeStats = staffWorkload.find((member) => member._id === formData.assignedTo)?.taskStats;
+
+  const buildBulkPayload = () => ({
+    assignedBy: adminUser?._id,
+    tasks: bulkRows
+      .filter((row) => row.title.trim())
+      .map((row) => ({
+        ...row,
+        assignedBy: adminUser?._id,
+        description: '',
+        status: 'TODO',
+        area: row.area || null,
+        animal: row.animal || null,
+        dueDate: row.dueDate ? new Date(row.dueDate).toISOString() : '',
+      })),
   });
 
   const handleSubmitTask = async (event) => {
@@ -211,6 +300,38 @@ const AdminAssignmentsPage = () => {
         setMessage(response.message || 'Task updated successfully.');
       }
 
+      closeModal();
+      await loadData();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitBulkTasks = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+
+    try {
+      if (!adminUser?._id) {
+        throw new Error('Admin user was not found in the database. Run seed again or refresh users.');
+      }
+
+      const payload = buildBulkPayload();
+      if (payload.tasks.length === 0) {
+        throw new Error('Add at least one task title before creating bulk tasks.');
+      }
+
+      const invalidTask = payload.tasks.find((task) => !task.assignedTo || !task.dueDate || isPastDateTime(task.dueDate));
+      if (invalidTask) {
+        throw new Error('Every bulk task needs an assignee and a future due date.');
+      }
+
+      const response = await adminApi.createBulkTasks(payload);
+      setMessage(response.message || 'Tasks created successfully.');
       closeModal();
       await loadData();
     } catch (requestError) {
@@ -273,7 +394,7 @@ const AdminAssignmentsPage = () => {
         <div className="admin-hero-panel">
           <span className="admin-panel-label">Assignment owner</span>
           <strong>{adminUser?.fullName || currentUser?.email || 'Admin'}</strong>
-          <p>{summary.todo + summary.inProgress} open task(s) need coordination.</p>
+          <p>{summary.todo + summary.inProgress} open task(s), {summary.overloaded} overloaded staff member(s).</p>
         </div>
       </section>
 
@@ -282,6 +403,7 @@ const AdminAssignmentsPage = () => {
         <article className="admin-metric-card"><span className="admin-metric-label">TODO</span><strong className="admin-metric-value">{summary.todo}</strong><span className="admin-metric-note">Waiting to start</span></article>
         <article className="admin-metric-card"><span className="admin-metric-label">In progress</span><strong className="admin-metric-value">{summary.inProgress}</strong><span className="admin-metric-note">Being handled</span></article>
         <article className="admin-metric-card"><span className="admin-metric-label">Done</span><strong className="admin-metric-value">{summary.done}</strong><span className="admin-metric-note">Completed</span></article>
+        <article className="admin-metric-card"><span className="admin-metric-label">Overloaded</span><strong className="admin-metric-value">{summary.overloaded}</strong><span className="admin-metric-note">Open + overdue >= {workloadOpenTaskLimit}</span></article>
       </section>
 
       <section className="admin-card">
@@ -292,11 +414,12 @@ const AdminAssignmentsPage = () => {
           </div>
           <div className="admin-inline-actions">
             <button type="button" className="admin-button admin-button-primary" onClick={openCreateModal}>Create task</button>
+            <button type="button" className="admin-button admin-button-secondary" onClick={openBulkModal}>Bulk create</button>
             <button type="button" className="admin-button admin-button-secondary" onClick={loadData}>Refresh</button>
           </div>
         </div>
 
-        <div className="admin-filter-grid">
+        <div className="admin-filter-grid admin-filter-grid-four">
           <label className="admin-field">
             <span>Search</span>
             <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search title, staff, area or animal" />
@@ -314,6 +437,39 @@ const AdminAssignmentsPage = () => {
               {staff.map((member) => <option key={member._id} value={member._id}>{member.fullName}</option>)}
             </select>
           </label>
+          <label className="admin-field">
+            <span>Area</span>
+            <select value={areaFilter} onChange={(event) => setAreaFilter(event.target.value)}>
+              <option value="ALL">ALL</option>
+              {areas.map((area) => <option key={area._id} value={area._id}>{area.name}</option>)}
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="admin-card">
+        <div className="admin-card-header">
+          <div>
+            <span className="admin-card-kicker">Workload</span>
+            <h2>Staff and vet capacity</h2>
+          </div>
+        </div>
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead><tr><th>Staff</th><th>Area</th><th>Open</th><th>Overdue</th><th>Done</th><th>Load</th></tr></thead>
+            <tbody>
+              {staffWorkload.map((member) => (
+                <tr key={member._id}>
+                  <td><strong>{member.fullName}</strong><span className="admin-table-subtext">{member.role}</span></td>
+                  <td>{member.assignedArea || 'No area'}</td>
+                  <td>{member.taskStats.open}</td>
+                  <td>{member.taskStats.overdue}</td>
+                  <td>{member.taskStats.done}</td>
+                  <td><span className={`admin-badge admin-badge-${member.taskStats.isOverloaded ? 'overdue' : 'active'}`}>{member.taskStats.isOverloaded ? 'OVERLOADED' : 'OK'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -387,15 +543,51 @@ const AdminAssignmentsPage = () => {
 
       {modalMode && (
         <div className="admin-modal-backdrop" onClick={closeModal}>
-          <div className="admin-modal" onClick={(event) => event.stopPropagation()}>
+          <div className={`admin-modal ${modalMode === 'bulk' ? 'admin-modal-wide' : ''}`} onClick={(event) => event.stopPropagation()}>
             <div className="admin-card-header">
               <div>
-                <span className="admin-card-kicker">{modalMode === 'create' ? 'Create assignment' : 'Edit assignment'}</span>
-                <h2>{modalMode === 'create' ? 'New task' : selectedTask?.title}</h2>
+                <span className="admin-card-kicker">{modalMode === 'bulk' ? 'Bulk assignment' : modalMode === 'create' ? 'Create assignment' : 'Edit assignment'}</span>
+                <h2>{modalMode === 'bulk' ? 'Create multiple tasks' : modalMode === 'create' ? 'New task' : selectedTask?.title}</h2>
               </div>
               <button type="button" className="admin-text-button" onClick={closeModal}>Close</button>
             </div>
 
+            {modalMode === 'bulk' ? (
+              <form onSubmit={handleSubmitBulkTasks}>
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead><tr><th>Title</th><th>Assignee</th><th>Area</th><th>Animal</th><th>Due</th><th>Priority</th><th></th></tr></thead>
+                    <tbody>
+                      {bulkRows.map((row, index) => {
+                        const rowAssignee = staffWorkload.find((member) => member._id === row.assignedTo);
+                        return (
+                          <tr key={`bulk-${index}`}>
+                            <td><input className="admin-inline-select" value={row.title} onChange={(event) => handleBulkRowChange(index, 'title', event.target.value)} placeholder="Task title" /></td>
+                            <td>
+                              <select className="admin-inline-select" value={row.assignedTo} onChange={(event) => handleBulkRowChange(index, 'assignedTo', event.target.value)} required>
+                                <option value="">Select</option>
+                                {staffWorkload.map((member) => <option key={member._id} value={member._id}>{member.fullName} ({member.taskStats.open} open)</option>)}
+                              </select>
+                              {rowAssignee?.taskStats.isOverloaded && <span className="admin-table-subtext">Overload warning</span>}
+                            </td>
+                            <td><select className="admin-inline-select" value={row.area} onChange={(event) => handleBulkRowChange(index, 'area', event.target.value)}><option value="">No area</option>{areas.map((area) => <option key={area._id} value={area._id}>{area.name}</option>)}</select></td>
+                            <td><select className="admin-inline-select" value={row.animal} onChange={(event) => handleBulkRowChange(index, 'animal', event.target.value)}><option value="">No animal</option>{animals.map((animal) => <option key={animal._id} value={animal._id}>{animal.name}</option>)}</select></td>
+                            <td><input className="admin-inline-select" type="datetime-local" min={toDateTimeInput(new Date())} value={row.dueDate} onChange={(event) => handleBulkRowChange(index, 'dueDate', event.target.value)} required /></td>
+                            <td><select className="admin-inline-select" value={row.priority} onChange={(event) => handleBulkRowChange(index, 'priority', event.target.value)}>{priorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}</select></td>
+                            <td><button type="button" className="admin-text-button admin-text-button-danger" onClick={() => removeBulkRow(index)} disabled={bulkRows.length === 1}>Remove</button></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="admin-inline-actions" style={{ marginTop: '16px' }}>
+                  <button type="button" className="admin-button admin-button-secondary" onClick={addBulkRow}>Add row</button>
+                  <button type="submit" className="admin-button admin-button-primary" disabled={submitting}>{submitting ? 'Creating...' : 'Create tasks'}</button>
+                  <button type="button" className="admin-button admin-button-secondary" onClick={closeModal}>Cancel</button>
+                </div>
+              </form>
+            ) : (
             <form className="admin-form-grid" onSubmit={handleSubmitTask}>
               <label className="admin-field admin-field-full">
                 <span>Title</span>
@@ -421,8 +613,9 @@ const AdminAssignmentsPage = () => {
                 <span>Assignee</span>
                 <select name="assignedTo" value={formData.assignedTo} onChange={handleFormChange} required>
                   <option value="">Select staff</option>
-                  {staff.map((member) => <option key={member._id} value={member._id}>{member.fullName}</option>)}
+                  {staffWorkload.map((member) => <option key={member._id} value={member._id}>{member.fullName} ({member.taskStats.open} open, {member.taskStats.overdue} overdue)</option>)}
                 </select>
+                {selectedAssigneeStats?.isOverloaded && <span className="admin-table-subtext">Overload warning: this staff member already has {selectedAssigneeStats.open} open and {selectedAssigneeStats.overdue} overdue task(s).</span>}
               </label>
               <label className="admin-field">
                 <span>Status</span>
@@ -455,6 +648,7 @@ const AdminAssignmentsPage = () => {
                 <button type="button" className="admin-button admin-button-secondary" onClick={closeModal}>Cancel</button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

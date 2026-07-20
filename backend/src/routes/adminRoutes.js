@@ -15,6 +15,7 @@ const {
   deleteAnimal,
   listTasks,
   createTask,
+  createBulkTasks,
   updateTask,
   deleteTask,
   listTickets,
@@ -53,6 +54,7 @@ router.delete('/animals/:id', deleteAnimal);
 
 router.get('/tasks', listTasks);
 router.post('/tasks', createTask);
+router.post('/tasks/bulk', createBulkTasks);
 router.put('/tasks/:id', updateTask);
 router.delete('/tasks/:id', deleteTask);
 

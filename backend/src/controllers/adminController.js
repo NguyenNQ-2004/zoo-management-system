@@ -54,6 +54,8 @@ const validTicketTypes = ['ADULT', 'CHILD', 'STUDENT', 'VIP', 'GROUP'];
 const validServiceCategories = ['FOOD', 'GUIDE', 'PHOTO', 'EVENT', 'RENTAL'];
 const validBookingStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED'];
 const validPaymentStatuses = ['UNPAID', 'PAID', 'REFUNDED'];
+const validBookingActions = ['STATUS_UPDATE', 'CONFIRM_PAYMENT', 'CANCEL_REFUND', 'MARK_USED'];
+const workloadOpenTaskLimit = 5;
 
 const isBlank = (value) => typeof value !== 'string' || value.trim() === '';
 const isNonNegativeNumber = (value) => Number.isFinite(Number(value)) && Number(value) >= 0;
@@ -236,6 +238,26 @@ const sanitizeTask = (task) => ({
   updatedAt: task.updatedAt,
 });
 
+const buildTaskStats = (tasks) => {
+  const now = new Date();
+  const todo = tasks.filter((task) => task.status === 'TODO').length;
+  const inProgress = tasks.filter((task) => task.status === 'IN_PROGRESS').length;
+  const done = tasks.filter((task) => task.status === 'DONE').length;
+  const overdue = tasks.filter((task) => task.status !== 'DONE' && task.dueDate && task.dueDate < now).length;
+  const open = todo + inProgress;
+
+  return {
+    total: tasks.length,
+    todo,
+    inProgress,
+    done,
+    open,
+    overdue,
+    workloadScore: open + overdue,
+    isOverloaded: open + overdue >= workloadOpenTaskLimit,
+  };
+};
+
 const taskPopulate = [
   { path: 'assignedTo', select: '-password' },
   { path: 'assignedBy', select: '-password' },
@@ -284,6 +306,16 @@ const sanitizeBooking = (booking) => ({
   status: booking.status,
   paymentStatus: booking.paymentStatus,
   notes: booking.notes,
+  statusHistory: (booking.statusHistory || []).map((entry) => ({
+    fromStatus: entry.fromStatus,
+    toStatus: entry.toStatus,
+    fromPaymentStatus: entry.fromPaymentStatus,
+    toPaymentStatus: entry.toPaymentStatus,
+    action: entry.action,
+    note: entry.note,
+    changedBy: entry.changedBy ? sanitizeUser(entry.changedBy) : null,
+    changedAt: entry.changedAt,
+  })),
   createdAt: booking.createdAt,
   updatedAt: booking.updatedAt,
 });
@@ -519,12 +551,7 @@ const listStaff = async (req, res) => {
 
       return {
         ...sanitizeUser(user),
-        taskStats: {
-          total: userTasks.length,
-          todo: userTasks.filter((task) => task.status === 'TODO').length,
-          inProgress: userTasks.filter((task) => task.status === 'IN_PROGRESS').length,
-          done: userTasks.filter((task) => task.status === 'DONE').length,
-        },
+        taskStats: buildTaskStats(userTasks),
         animalCount: userAnimals.length,
       };
     });
@@ -1059,7 +1086,7 @@ const deleteAnimal = async (req, res) => {
 
 const listTasks = async (req, res) => {
   try {
-    const { status, assignedTo } = req.query;
+    const { status, assignedTo, area } = req.query;
     const filters = {};
 
     if (status && status !== 'ALL') {
@@ -1076,13 +1103,37 @@ const listTasks = async (req, res) => {
       filters.assignedTo = assignedTo;
     }
 
+    if (area && area !== 'ALL') {
+      if (!isValidObjectId(area)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid area id.',
+        });
+      }
+      filters.area = area;
+    }
+
     const tasks = await StaffTask.find(filters)
       .populate(taskPopulate)
       .sort({ dueDate: 1, createdAt: -1 });
 
+    const allTasks = await StaffTask.find().select('assignedTo status dueDate');
+    const workload = new Map();
+    allTasks.forEach((task) => {
+      const key = task.assignedTo?.toString();
+      if (!key) return;
+      const current = workload.get(key) || [];
+      current.push(task);
+      workload.set(key, current);
+    });
+
     return res.json({
       success: true,
       data: tasks.map(sanitizeTask),
+      workload: Array.from(workload.entries()).map(([staffId, staffTasks]) => ({
+        staffId,
+        taskStats: buildTaskStats(staffTasks),
+      })),
     });
   } catch (error) {
     return res.status(500).json({
@@ -1169,6 +1220,116 @@ const createTask = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to create task.',
+      error: error.message,
+    });
+  }
+};
+
+const createBulkTasks = async (req, res) => {
+  try {
+    const { tasks = [], assignedBy } = req.body;
+
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'tasks must be a non-empty array.',
+      });
+    }
+
+    if (tasks.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot create more than 50 tasks at once.',
+      });
+    }
+
+    if (!assignedBy || !isValidObjectId(assignedBy)) {
+      return res.status(400).json({
+        success: false,
+        message: 'assignedBy is required and must be a valid user id.',
+      });
+    }
+
+    const normalizedTasks = [];
+
+    for (const [index, taskInput] of tasks.entries()) {
+      const {
+        title,
+        description = '',
+        taskType = 'CARE',
+        priority = 'MEDIUM',
+        assignedTo,
+        area,
+        animal,
+        dueDate,
+        status = 'TODO',
+      } = taskInput;
+
+      if (isBlank(title) || !assignedTo || !dueDate) {
+        return res.status(400).json({
+          success: false,
+          message: `Task ${index + 1}: title, assignedTo and dueDate are required.`,
+        });
+      }
+
+      if (isPastDateTime(dueDate)) {
+        return res.status(400).json({
+          success: false,
+          message: `Task ${index + 1}: due date cannot be in the past.`,
+        });
+      }
+
+      if (!isValidObjectId(assignedTo)) {
+        return res.status(400).json({
+          success: false,
+          message: `Task ${index + 1}: invalid assignee id.`,
+        });
+      }
+
+      if (!validTaskTypes.includes(taskType) || !validTaskPriorities.includes(priority) || !validTaskStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Task ${index + 1}: invalid task type, priority or status.`,
+        });
+      }
+
+      const assignee = await findAssignableUser(assignedTo);
+      if (!assignee) {
+        return res.status(400).json({
+          success: false,
+          message: `Task ${index + 1}: assignee must be an existing STAFF or VET user.`,
+        });
+      }
+
+      normalizedTasks.push({
+        title: title.trim(),
+        description: description.trim(),
+        taskType,
+        priority,
+        assignedTo: assignee._id,
+        assignedBy,
+        area: area && isValidObjectId(area) ? area : null,
+        animal: animal && isValidObjectId(animal) ? animal : null,
+        dueDate,
+        status,
+        completedAt: status === 'DONE' ? new Date() : null,
+      });
+    }
+
+    const createdTasks = await StaffTask.insertMany(normalizedTasks);
+    const populatedTasks = await StaffTask.find({
+      _id: { $in: createdTasks.map((task) => task._id) },
+    }).populate(taskPopulate);
+
+    return res.status(201).json({
+      success: true,
+      message: `${createdTasks.length} task(s) created successfully.`,
+      data: populatedTasks.map(sanitizeTask),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create tasks.',
       error: error.message,
     });
   }
@@ -1750,6 +1911,7 @@ const listBookings = async (req, res) => {
     const bookings = await Booking.find()
       .populate('user', '-password')
       .populate('items.ticket')
+      .populate('statusHistory.changedBy', '-password')
       .sort({ createdAt: -1 });
 
     return res.json({
@@ -1768,7 +1930,13 @@ const listBookings = async (req, res) => {
 const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, paymentStatus } = req.body;
+    const {
+      status,
+      paymentStatus,
+      action = 'STATUS_UPDATE',
+      note = '',
+      changedBy,
+    } = req.body;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -1785,35 +1953,91 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
-    if (status && !validBookingStatuses.includes(status)) {
+    if (!validBookingActions.includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking action.',
+      });
+    }
+
+    let nextStatus = status || booking.status;
+    let nextPaymentStatus = paymentStatus || booking.paymentStatus;
+
+    if (action === 'CONFIRM_PAYMENT') {
+      nextStatus = 'CONFIRMED';
+      nextPaymentStatus = 'PAID';
+    }
+
+    if (action === 'CANCEL_REFUND') {
+      nextStatus = 'CANCELLED';
+      nextPaymentStatus = booking.paymentStatus === 'PAID' ? 'REFUNDED' : 'UNPAID';
+    }
+
+    if (action === 'MARK_USED') {
+      nextStatus = 'USED';
+      nextPaymentStatus = 'PAID';
+    }
+
+    if (nextStatus && !validBookingStatuses.includes(nextStatus)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid booking status.',
       });
     }
 
-    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
+    if (nextPaymentStatus && !validPaymentStatuses.includes(nextPaymentStatus)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid payment status.',
       });
     }
 
-    if (booking.status === 'CANCELLED' && status === 'USED') {
+    if (booking.status === 'CANCELLED' && nextStatus === 'USED') {
       return res.status(400).json({
         success: false,
         message: 'Cancelled bookings cannot be marked as used directly.',
       });
     }
 
-    if (status) booking.status = status;
-    if (paymentStatus) booking.paymentStatus = paymentStatus;
+    if (booking.status === 'USED' && nextStatus === 'CANCELLED') {
+      return res.status(400).json({
+        success: false,
+        message: 'Used bookings cannot be cancelled or refunded.',
+      });
+    }
+
+    if (nextStatus === 'USED' && nextPaymentStatus !== 'PAID') {
+      return res.status(400).json({
+        success: false,
+        message: 'Bookings must be paid before they can be marked as used.',
+      });
+    }
+
+    const hasStatusChange = booking.status !== nextStatus;
+    const hasPaymentChange = booking.paymentStatus !== nextPaymentStatus;
+
+    if (hasStatusChange || hasPaymentChange || note.trim()) {
+      booking.statusHistory.push({
+        fromStatus: booking.status,
+        toStatus: nextStatus,
+        fromPaymentStatus: booking.paymentStatus,
+        toPaymentStatus: nextPaymentStatus,
+        action,
+        note: note.trim(),
+        changedBy: req.user?._id || (changedBy && isValidObjectId(changedBy) ? changedBy : null),
+        changedAt: new Date(),
+      });
+    }
+
+    booking.status = nextStatus;
+    booking.paymentStatus = nextPaymentStatus;
 
     await booking.save();
 
     const populatedBooking = await Booking.findById(id)
       .populate('user', '-password')
-      .populate('items.ticket');
+      .populate('items.ticket')
+      .populate('statusHistory.changedBy', '-password');
 
     return res.json({
       success: true,
@@ -1941,6 +2165,7 @@ const exportedFunctions = {
   deleteAnimal,
   listTasks,
   createTask,
+  createBulkTasks,
   updateTask,
   deleteTask,
   listTickets,

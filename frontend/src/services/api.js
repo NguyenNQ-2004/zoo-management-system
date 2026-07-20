@@ -243,8 +243,19 @@ export const adminApi = {
   deleteAnimal: async (id) => request(`/admin/animals/${id}`, {
     method: 'DELETE',
   }),
-  getTasks: async () => request('/admin/tasks'),
+  getTasks: async (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.status) query.set('status', params.status);
+    if (params.assignedTo) query.set('assignedTo', params.assignedTo);
+    if (params.area) query.set('area', params.area);
+
+    return request(`/admin/tasks${query.toString() ? `?${query.toString()}` : ''}`);
+  },
   createTask: async (body) => request('/admin/tasks', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }),
+  createBulkTasks: async (body) => request('/admin/tasks/bulk', {
     method: 'POST',
     body: JSON.stringify(body),
   }),

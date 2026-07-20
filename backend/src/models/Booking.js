@@ -21,6 +21,51 @@ const bookingItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const bookingStatusHistorySchema = new mongoose.Schema(
+  {
+    fromStatus: {
+      type: String,
+      enum: ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED', null],
+      default: null,
+    },
+    toStatus: {
+      type: String,
+      enum: ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED'],
+      required: true,
+    },
+    fromPaymentStatus: {
+      type: String,
+      enum: ['UNPAID', 'PAID', 'REFUNDED', null],
+      default: null,
+    },
+    toPaymentStatus: {
+      type: String,
+      enum: ['UNPAID', 'PAID', 'REFUNDED'],
+      required: true,
+    },
+    action: {
+      type: String,
+      enum: ['STATUS_UPDATE', 'CONFIRM_PAYMENT', 'CANCEL_REFUND', 'MARK_USED'],
+      default: 'STATUS_UPDATE',
+    },
+    note: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
 const bookingSchema = new mongoose.Schema(
   {
     bookingCode: {
@@ -62,6 +107,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: '',
       trim: true,
+    },
+    statusHistory: {
+      type: [bookingStatusHistorySchema],
+      default: [],
     },
   },
   {

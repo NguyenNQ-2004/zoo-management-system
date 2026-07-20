@@ -44,6 +44,15 @@ const AdminTicketsPage = () => {
   const [ticketForm, setTicketForm] = useState(emptyTicketForm);
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedBookingId, setExpandedBookingId] = useState('');
+
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    } catch (error) {
+      return null;
+    }
+  })();
 
   const loadData = async () => {
     try {
@@ -272,6 +281,9 @@ const AdminTicketsPage = () => {
       const response = await adminApi.updateBookingStatus(booking._id, {
         status: field === 'status' ? value : booking.status,
         paymentStatus: field === 'paymentStatus' ? value : booking.paymentStatus,
+        action: 'STATUS_UPDATE',
+        note: `Manual ${field} update from admin screen.`,
+        changedBy: currentUser?.id,
       });
       setMessage(response.message || 'Booking updated successfully.');
       await loadData();
@@ -280,6 +292,40 @@ const AdminTicketsPage = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleBookingAction = async (booking, action) => {
+    const actionLabels = {
+      CONFIRM_PAYMENT: 'confirm payment',
+      CANCEL_REFUND: 'cancel and refund',
+      MARK_USED: 'mark as used',
+    };
+    const shouldProceed = window.confirm(`Do you want to ${actionLabels[action]} for booking "${booking.bookingCode}"?`);
+    if (!shouldProceed) return;
+
+    try {
+      setSubmitting(true);
+      setError('');
+      setMessage('');
+      const response = await adminApi.updateBookingStatus(booking._id, {
+        action,
+        note: actionLabels[action],
+        changedBy: currentUser?.id,
+      });
+      setMessage(response.message || 'Booking updated successfully.');
+      setExpandedBookingId(booking._id);
+      await loadData();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getHistoryText = (entry) => {
+    const statusPart = `${entry.fromStatus || 'N/A'} -> ${entry.toStatus}`;
+    const paymentPart = `${entry.fromPaymentStatus || 'N/A'} -> ${entry.toPaymentStatus}`;
+    return `${entry.action}: ${statusPart}, ${paymentPart}`;
   };
 
   return (
@@ -378,17 +424,63 @@ const AdminTicketsPage = () => {
         ) : (
           <div className="admin-table-wrapper">
             <table className="admin-table">
-              <thead><tr><th>Booking</th><th>Customer</th><th>Visit</th><th>Total</th><th>Status</th><th>Payment</th></tr></thead>
+              <thead><tr><th>Booking</th><th>Customer</th><th>Visit</th><th>Total</th><th>Status</th><th>Payment</th><th>Actions</th></tr></thead>
               <tbody>
                 {filteredBookings.map((booking) => (
-                  <tr key={booking._id}>
-                    <td><strong>{booking.bookingCode}</strong><span className="admin-table-subtext">{booking.items.length} item(s)</span></td>
-                    <td>{booking.user?.fullName || booking.user?.email || 'Unknown'}</td>
-                    <td>{formatDate(booking.visitDate)}</td>
-                    <td>{formatMoney(booking.totalAmount)}</td>
-                    <td><select className="admin-inline-select" value={booking.status} onChange={(event) => handleBookingUpdate(booking, 'status', event.target.value)}>{bookingStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
-                    <td><select className="admin-inline-select" value={booking.paymentStatus} onChange={(event) => handleBookingUpdate(booking, 'paymentStatus', event.target.value)}>{paymentStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
-                  </tr>
+                  <React.Fragment key={booking._id}>
+                    <tr>
+                      <td>
+                        <strong>{booking.bookingCode}</strong>
+                        <span className="admin-table-subtext">{booking.items.length} item(s)</span>
+                        {booking.statusHistory?.length > 0 && (
+                          <span className="admin-table-subtext">Last: {booking.statusHistory[booking.statusHistory.length - 1].action}</span>
+                        )}
+                      </td>
+                      <td>{booking.user?.fullName || booking.user?.email || 'Unknown'}</td>
+                      <td>{formatDate(booking.visitDate)}</td>
+                      <td>{formatMoney(booking.totalAmount)}</td>
+                      <td><select className="admin-inline-select" value={booking.status} onChange={(event) => handleBookingUpdate(booking, 'status', event.target.value)} disabled={submitting}>{bookingStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
+                      <td><select className="admin-inline-select" value={booking.paymentStatus} onChange={(event) => handleBookingUpdate(booking, 'paymentStatus', event.target.value)} disabled={submitting}>{paymentStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></td>
+                      <td>
+                        <div className="admin-table-actions">
+                          <button type="button" className="admin-text-button" onClick={() => handleBookingAction(booking, 'CONFIRM_PAYMENT')} disabled={submitting || booking.status === 'CANCELLED' || booking.status === 'USED'}>Confirm payment</button>
+                          <button type="button" className="admin-text-button" onClick={() => handleBookingAction(booking, 'MARK_USED')} disabled={submitting || booking.status === 'CANCELLED' || booking.status === 'USED' || booking.paymentStatus !== 'PAID'}>Mark used</button>
+                          <button type="button" className="admin-text-button admin-text-button-danger" onClick={() => handleBookingAction(booking, 'CANCEL_REFUND')} disabled={submitting || booking.status === 'USED' || booking.status === 'CANCELLED'}>Cancel/refund</button>
+                          <button type="button" className="admin-text-button" onClick={() => setExpandedBookingId(expandedBookingId === booking._id ? '' : booking._id)}>{expandedBookingId === booking._id ? 'Hide history' : 'History'}</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedBookingId === booking._id && (
+                      <tr>
+                        <td colSpan="7">
+                          <div className="admin-details-grid">
+                            <div className="admin-detail-item">
+                              <span>Booking items</span>
+                              <strong>{booking.items.map((item) => `${item.ticket?.name || 'Ticket'} x${item.quantity}`).join(', ') || 'No items'}</strong>
+                            </div>
+                            <div className="admin-detail-item">
+                              <span>Current state</span>
+                              <strong>{booking.status} / {booking.paymentStatus}</strong>
+                            </div>
+                          </div>
+                          <div className="admin-timeline" style={{ marginTop: '14px' }}>
+                            {(booking.statusHistory || []).length === 0 ? (
+                              <div className="admin-empty-state">No status history yet.</div>
+                            ) : booking.statusHistory.slice().reverse().map((entry, index) => (
+                              <div className="admin-timeline-item" key={`${entry.changedAt}-${index}`}>
+                                <span className="admin-timeline-dot" />
+                                <div>
+                                  <strong>{getHistoryText(entry)}</strong>
+                                  <span>{formatDate(entry.changedAt)} by {entry.changedBy?.fullName || 'Admin'}</span>
+                                  {entry.note && <span className="admin-table-subtext">{entry.note}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
