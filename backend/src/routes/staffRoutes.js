@@ -4,7 +4,9 @@ const {
   getAnimalCareDetail,
   getAnimalCareLogs,
   getStaffAnimals,
+  getStaffCareLogs,
   getStaffDashboard,
+  getStaffSchedule,
   getStaffTaskById,
   getStaffTasks,
   updateAnimalCareStatus,
@@ -14,6 +16,8 @@ const {
 const router = express.Router();
 
 router.get('/dashboard', getStaffDashboard);
+router.get('/schedule', getStaffSchedule);
+router.get('/care-logs', getStaffCareLogs);
 router.get('/tasks', getStaffTasks);
 router.get('/tasks/:id', getStaffTaskById);
 router.put('/tasks/:id/status', updateStaffTaskStatus);

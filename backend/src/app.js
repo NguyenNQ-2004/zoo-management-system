@@ -5,6 +5,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const areaRoutes = require('./routes/areaRoutes');
 const animalRoutes = require('./routes/animalRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/areas', areaRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/user', userRoutes);
 
 const staffRoutes = require('./routes/staffRoutes');
 app.use('/api/staff', staffRoutes);

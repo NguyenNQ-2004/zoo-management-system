@@ -7,6 +7,12 @@ const StaffTask = require('../models/StaffTask');
 const Ticket = require('../models/Ticket');
 const Booking = require('../models/Booking');
 const ZooService = require('../models/ZooService');
+const {
+  careStatusToHealthStatus,
+  healthStatusToCareStatus,
+  normalizeGender,
+  normalizeOperationalStatus,
+} = require('../utils/animalStatus');
 
 const sanitizeUser = (user) => ({
   _id: user._id,
@@ -66,7 +72,9 @@ const sanitizeAnimal = (animal, health = null) => ({
   dateOfBirth: animal.dateOfBirth,
   origin: animal.origin,
   diet: animal.diet,
-  status: animal.status,
+  status: healthStatusToCareStatus(animal.healthStatus),
+  healthStatus: animal.healthStatus,
+  operationalStatus: animal.status,
   notes: animal.notes,
   area: animal.area
     ? {
@@ -142,7 +150,8 @@ const sanitizeService = (service) => ({
   category: service.category,
   description: service.description,
   price: service.price,
-  durationMinutes: service.durationMinutes,
+  durationMinutes: service.durationMinutes ?? service.duration ?? 0,
+  duration: service.duration ?? service.durationMinutes ?? 0,
   isActive: service.isActive,
   createdAt: service.createdAt,
   updatedAt: service.updatedAt,
@@ -570,7 +579,7 @@ const upsertAnimalHealth = async (animalId, health = {}) => {
   return AnimalHealth.findOneAndUpdate(
     { animal: animalId },
     { $set: healthFields, $setOnInsert: { animal: animalId } },
-    { new: true, upsert: true }
+    { returnDocument: 'after', upsert: true }
   ).populate('checkedBy', '-password');
 };
 
@@ -587,6 +596,8 @@ const createAnimal = async (req, res) => {
       origin = '',
       diet = '',
       status = 'HEALTHY',
+      healthStatus,
+      operationalStatus = 'Active',
       area,
       caretaker,
       notes = '',
@@ -615,17 +626,27 @@ const createAnimal = async (req, res) => {
       });
     }
 
+    const normalizedHealthStatus = careStatusToHealthStatus(healthStatus || status);
+
+    if (!normalizedHealthStatus) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid animal health status.',
+      });
+    }
+
     const animal = await Animal.create({
       code: code.toUpperCase().trim(),
       name: name.trim(),
       species: species.trim(),
       imageUrl: imageUrl.trim(),
       scientificName: scientificName.trim(),
-      gender,
+      gender: normalizeGender(gender),
       dateOfBirth: dateOfBirth || null,
       origin: origin.trim(),
       diet: diet.trim(),
-      status,
+      healthStatus: normalizedHealthStatus,
+      status: normalizeOperationalStatus(operationalStatus),
       area,
       caretaker: caretaker && isValidObjectId(caretaker) ? caretaker : null,
       notes: notes.trim(),
@@ -681,6 +702,8 @@ const updateAnimal = async (req, res) => {
       origin,
       diet,
       status,
+      healthStatus,
+      operationalStatus,
       area,
       caretaker,
       notes,
@@ -702,11 +725,21 @@ const updateAnimal = async (req, res) => {
     if (species) animal.species = species.trim();
     if (typeof imageUrl === 'string') animal.imageUrl = imageUrl.trim();
     if (typeof scientificName === 'string') animal.scientificName = scientificName.trim();
-    if (gender) animal.gender = gender;
+    if (gender) animal.gender = normalizeGender(gender);
     if (Object.prototype.hasOwnProperty.call(req.body, 'dateOfBirth')) animal.dateOfBirth = dateOfBirth || null;
     if (typeof origin === 'string') animal.origin = origin.trim();
     if (typeof diet === 'string') animal.diet = diet.trim();
-    if (status) animal.status = status;
+    if (status || healthStatus) {
+      const normalizedHealthStatus = careStatusToHealthStatus(healthStatus || status);
+      if (!normalizedHealthStatus) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid animal health status.',
+        });
+      }
+      animal.healthStatus = normalizedHealthStatus;
+    }
+    if (operationalStatus) animal.status = normalizeOperationalStatus(operationalStatus);
     if (area && isValidObjectId(area)) animal.area = area;
     if (Object.prototype.hasOwnProperty.call(req.body, 'caretaker')) {
       animal.caretaker = caretaker && isValidObjectId(caretaker) ? caretaker : null;
@@ -1145,6 +1178,7 @@ const createService = async (req, res) => {
       description = '',
       price = 0,
       durationMinutes = 0,
+      duration,
       isActive = true,
     } = req.body;
 
@@ -1169,7 +1203,8 @@ const createService = async (req, res) => {
       category,
       description: description.trim(),
       price: Number(price),
-      durationMinutes: Number(durationMinutes),
+      duration: Number(duration ?? durationMinutes ?? 0),
+      durationMinutes: Number(durationMinutes ?? duration ?? 0),
       isActive,
     });
 
@@ -1206,7 +1241,7 @@ const updateService = async (req, res) => {
       });
     }
 
-    const { code, name, category, description, price, durationMinutes, isActive } = req.body;
+    const { code, name, category, description, price, durationMinutes, duration, isActive } = req.body;
 
     if (code && code.toUpperCase().trim() !== service.code) {
       const existingService = await ZooService.findOne({ code: code.toUpperCase().trim() });
@@ -1223,7 +1258,11 @@ const updateService = async (req, res) => {
     if (category) service.category = category;
     if (typeof description === 'string') service.description = description.trim();
     if (price !== undefined) service.price = Number(price);
-    if (durationMinutes !== undefined) service.durationMinutes = Number(durationMinutes);
+    if (durationMinutes !== undefined || duration !== undefined) {
+      const nextDuration = Number(durationMinutes ?? duration ?? 0);
+      service.duration = nextDuration;
+      service.durationMinutes = nextDuration;
+    }
     if (typeof isActive === 'boolean') service.isActive = isActive;
 
     await service.save();
@@ -1362,7 +1401,9 @@ const getReports = async (req, res) => {
     const paidBookings = bookings.filter((booking) => booking.paymentStatus === 'PAID');
     const revenue = paidBookings.reduce((total, booking) => total + booking.totalAmount, 0);
     const pendingBookings = bookings.filter((booking) => booking.status === 'PENDING').length;
-    const monitoringAnimals = animals.filter((animal) => ['OBSERVATION', 'TREATMENT'].includes(animal.status)).length;
+    const monitoringAnimals = animals.filter((animal) => (
+      ['OBSERVATION', 'TREATMENT'].includes(healthStatusToCareStatus(animal.healthStatus))
+    )).length;
     const openTasks = tasks.filter((task) => task.status !== 'DONE').length;
 
     const bookingStatus = ['PENDING', 'CONFIRMED', 'CANCELLED', 'USED'].map((status) => ({
@@ -1375,9 +1416,9 @@ const getReports = async (req, res) => {
       count: tasks.filter((task) => task.status === status).length,
     }));
 
-    const animalStatus = ['HEALTHY', 'OBSERVATION', 'TREATMENT', 'TRANSFERRED'].map((status) => ({
+    const animalStatus = ['HEALTHY', 'OBSERVATION', 'TREATMENT'].map((status) => ({
       status,
-      count: animals.filter((animal) => animal.status === status).length,
+      count: animals.filter((animal) => healthStatusToCareStatus(animal.healthStatus) === status).length,
     }));
 
     const ticketSalesMap = new Map();

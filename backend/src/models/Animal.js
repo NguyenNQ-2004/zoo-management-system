@@ -19,10 +19,24 @@ const animalSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    imageUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    scientificName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     gender: {
       type: String,
       enum: ['Male', 'Female', 'Unknown'],
       default: 'Unknown',
+    },
+    dateOfBirth: {
+      type: Date,
+      default: null,
     },
     age: {
       type: Number,
@@ -31,7 +45,7 @@ const animalSchema = new mongoose.Schema(
     },
     healthStatus: {
       type: String,
-      enum: ['Healthy', 'Sick', 'Under Treatment', 'Quarantine', 'Recovered'],
+      enum: ['Healthy', 'Observation', 'Sick', 'Under Treatment', 'Quarantine', 'Recovered'],
       default: 'Healthy',
     },
     behavior: {
@@ -40,6 +54,11 @@ const animalSchema = new mongoose.Schema(
       trim: true,
     },
     origin: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    diet: {
       type: String,
       default: '',
       trim: true,

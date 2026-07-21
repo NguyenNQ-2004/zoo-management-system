@@ -55,7 +55,7 @@
 
 .task-filter-panel {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.4fr) auto auto;
+  grid-template-columns: minmax(240px, 1fr) minmax(150px, 0.34fr) minmax(150px, 0.34fr) minmax(150px, 0.34fr) auto auto;
   gap: 14px;
   align-items: end;
   margin-bottom: 24px;
@@ -107,7 +107,7 @@
 
 .staff-task-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -297,7 +297,7 @@
 
 @media (max-width: 1120px) {
   .staff-task-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .assigned-task-table {
@@ -327,6 +327,13 @@
     grid-template-columns: 1fr;
   }
 
+  .task-filter-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .staff-task-summary-grid,
   .task-filter-panel {
     grid-template-columns: 1fr;
   }

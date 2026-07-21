@@ -10,6 +10,20 @@ const statusOptions = [
   { value: 'DONE', label: 'Done' },
 ];
 
+const priorityOptions = [
+  { value: '', label: 'All Priorities' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'MEDIUM', label: 'Normal' },
+  { value: 'LOW', label: 'Low' },
+];
+
+const dueOptions = [
+  { value: '', label: 'All Due Dates' },
+  { value: 'TODAY', label: 'Due Today' },
+  { value: 'OVERDUE', label: 'Overdue' },
+  { value: 'UPCOMING', label: 'Upcoming' },
+];
+
 const formatDateTime = (value) => {
   if (!value) return 'No due date';
 
@@ -38,11 +52,13 @@ const StaffTasksPage = () => {
   const [taskData, setTaskData] = useState(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [priority, setPriority] = useState('');
+  const [due, setDue] = useState('');
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState('');
   const [error, setError] = useState('');
 
-  const loadTasks = async (filters = { search, status }) => {
+  const loadTasks = async (filters = { search, status, priority, due }) => {
     try {
       setLoading(true);
       setError('');
@@ -56,29 +72,37 @@ const StaffTasksPage = () => {
   };
 
   useEffect(() => {
-    loadTasks({ search: '', status: '' });
+    const timer = setTimeout(() => {
+      loadTasks({ search, status, priority, due });
+    }, 250);
+
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [search, status, priority, due]);
 
   const tasks = taskData?.tasks || [];
   const summary = taskData?.summary || {};
 
   const summaryCards = useMemo(() => ([
     { label: 'All Tasks', value: summary.total ?? tasks.length },
+    { label: 'Filtered', value: summary.filtered ?? tasks.length },
     { label: 'To Do', value: summary.todo ?? 0 },
     { label: 'In Progress', value: summary.inProgress ?? 0 },
     { label: 'Done', value: summary.done ?? 0 },
-  ]), [summary.total, summary.todo, summary.inProgress, summary.done, tasks.length]);
+    { label: 'Overdue', value: summary.overdue ?? 0 },
+  ]), [summary.total, summary.filtered, summary.todo, summary.inProgress, summary.done, summary.overdue, tasks.length]);
 
   const handleFilterSubmit = (event) => {
     event.preventDefault();
-    loadTasks({ search, status });
+    loadTasks({ search, status, priority, due });
   };
 
   const handleClearFilters = () => {
     setSearch('');
     setStatus('');
-    loadTasks({ search: '', status: '' });
+    setPriority('');
+    setDue('');
+    loadTasks({ search: '', status: '', priority: '', due: '' });
   };
 
   const handleStatusChange = async (taskId, nextStatus) => {
@@ -86,7 +110,7 @@ const StaffTasksPage = () => {
       setUpdatingId(taskId);
       setError('');
       await api.updateStaffTaskStatus(taskId, nextStatus);
-      await loadTasks({ search, status });
+      await loadTasks({ search, status, priority, due });
     } catch (err) {
       setError(err.message || 'Failed to update task status');
     } finally {
@@ -118,6 +142,24 @@ const StaffTasksPage = () => {
           <span>Status</span>
           <select value={status} onChange={(event) => setStatus(event.target.value)}>
             {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>Priority</span>
+          <select value={priority} onChange={(event) => setPriority(event.target.value)}>
+            {priorityOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <span>Due</span>
+          <select value={due} onChange={(event) => setDue(event.target.value)}>
+            {dueOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>

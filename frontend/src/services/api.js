@@ -29,6 +29,15 @@ const getStaffHeaders = () => {
   };
 };
 
+const getUserHeaders = () => {
+  const currentUser = getCurrentUser() || {};
+
+  return {
+    ...getAuthHeaders(),
+    ...(currentUser.email ? { 'x-user-email': currentUser.email } : {})
+  };
+};
+
 const parseResponse = async (response) => {
   const contentType = response.headers.get('content-type') || '';
   const body = contentType.includes('application/json')
@@ -101,10 +110,27 @@ export const api = {
     headers: getStaffHeaders()
   }),
 
+  getStaffSchedule: async () => request('/staff/schedule', {
+    headers: getStaffHeaders()
+  }),
+
+  getStaffCareLogs: async (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.set('search', params.search);
+    if (params.careType) query.set('careType', params.careType);
+    if (params.date) query.set('date', params.date);
+
+    return request(`/staff/care-logs${query.toString() ? `?${query.toString()}` : ''}`, {
+      headers: getStaffHeaders()
+    });
+  },
+
   getStaffTasks: async (params = {}) => {
     const query = new URLSearchParams();
     if (params.status) query.set('status', params.status);
     if (params.search) query.set('search', params.search);
+    if (params.priority) query.set('priority', params.priority);
+    if (params.due) query.set('due', params.due);
 
     return request(`/staff/tasks${query.toString() ? `?${query.toString()}` : ''}`, {
       headers: getStaffHeaders()
@@ -262,4 +288,25 @@ export const adminApi = {
     body: JSON.stringify(body),
   }),
   getReports: async () => request('/admin/reports'),
+};
+
+export const userApi = {
+  getDashboard: async () => request('/user/dashboard', {
+    headers: getUserHeaders()
+  }),
+  getProfile: async () => request('/user/profile', {
+    headers: getUserHeaders()
+  }),
+  getAnimals: async () => request('/user/animals', {
+    headers: getUserHeaders()
+  }),
+  getServices: async () => request('/user/services', {
+    headers: getUserHeaders()
+  }),
+  getTickets: async () => request('/user/tickets', {
+    headers: getUserHeaders()
+  }),
+  getBookings: async () => request('/user/bookings', {
+    headers: getUserHeaders()
+  }),
 };

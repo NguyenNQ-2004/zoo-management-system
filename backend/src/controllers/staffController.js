@@ -4,6 +4,10 @@ const CareLog = require('../models/CareLog');
 const Animal = require('../models/Animal');
 const AnimalHealth = require('../models/AnimalHealth');
 const ZooArea = require('../models/ZooArea');
+const {
+  careStatusToHealthStatus,
+  healthStatusToCareStatus,
+} = require('../utils/animalStatus');
 
 const startOfDay = (date) => {
   const value = new Date(date);
@@ -55,6 +59,15 @@ const formatDateTime = (date) => {
   }).format(new Date(date));
 };
 
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date));
+};
+
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const getStaffFromRequest = async (req) => {
@@ -90,7 +103,9 @@ const mapAnimal = (animal, latestLog = null, latestHealth = null) => ({
   dateOfBirth: animal.dateOfBirth,
   origin: animal.origin,
   diet: animal.diet,
-  status: animal.status,
+  status: healthStatusToCareStatus(animal.healthStatus),
+  healthStatus: animal.healthStatus,
+  operationalStatus: animal.status,
   area: animal.area?.name || '',
   areaLocation: animal.area?.location || '',
   notes: animal.notes,
@@ -169,18 +184,34 @@ const parseTaskStatus = (status) => {
   return aliases[normalized] || null;
 };
 
-const parseAnimalStatus = (status) => {
-  const normalized = String(status || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+const parseTaskPriority = (priority) => {
+  const normalized = String(priority || '').trim().toUpperCase();
   const aliases = {
-    HEALTHY: 'HEALTHY',
-    OBSERVATION: 'OBSERVATION',
-    MONITORING: 'OBSERVATION',
-    TREATMENT: 'TREATMENT',
-    TRANSFERRED: 'TRANSFERRED',
+    LOW: 'LOW',
+    MEDIUM: 'MEDIUM',
+    NORMAL: 'MEDIUM',
+    HIGH: 'HIGH',
   };
 
   return aliases[normalized] || null;
 };
+
+const parseAnimalStatus = (status) => careStatusToHealthStatus(status);
+
+const mapCareLog = (log) => ({
+  id: log._id,
+  careType: log.careType,
+  notes: log.notes,
+  loggedAt: log.loggedAt,
+  date: formatDate(log.loggedAt),
+  time: formatTime(log.loggedAt),
+  animalId: log.animal?._id || '',
+  animalName: log.animal?.name || 'Unknown animal',
+  animalSpecies: log.animal?.species || '',
+  taskId: log.task?._id || '',
+  taskTitle: log.task?.title || '',
+  staffName: log.staff?.fullName || log.staff?.email || '',
+});
 
 exports.getStaffDashboard = async (req, res) => {
   try {
@@ -210,7 +241,7 @@ exports.getStaffDashboard = async (req, res) => {
           .sort({ dueDate: 1, createdAt: -1 })
           .limit(12)
           .populate('area', 'name location')
-          .populate('animal', 'name species status'),
+          .populate('animal', 'name species status healthStatus'),
         Animal.find(await buildAssignedAnimalQuery(staff._id))
           .sort({ name: 1 })
           .limit(12)
@@ -244,7 +275,9 @@ exports.getStaffDashboard = async (req, res) => {
         id: animal._id,
         name: animal.name,
         species: animal.species,
-        status: animal.status,
+        status: healthStatusToCareStatus(animal.healthStatus),
+        healthStatus: animal.healthStatus,
+        operationalStatus: animal.status,
         area: animal.area?.name || animal.area?.location || '',
       })),
       recentActivity: recentCareLogs.map((log) => ({
@@ -270,11 +303,37 @@ exports.getStaffTasks = async (req, res) => {
       return res.status(404).json({ message: 'Staff user not found' });
     }
 
-    const query = { assignedTo: staff._id };
+    const baseQuery = { assignedTo: staff._id };
+    const query = { ...baseQuery };
 
     if (req.query.status) {
       const parsedStatus = parseTaskStatus(req.query.status);
       if (parsedStatus) query.status = parsedStatus;
+    }
+
+    if (req.query.priority) {
+      const parsedPriority = parseTaskPriority(req.query.priority);
+      if (parsedPriority) query.priority = parsedPriority;
+    }
+
+    if (req.query.due) {
+      const dueFilter = String(req.query.due).trim().toUpperCase();
+      const now = new Date();
+      const todayStart = startOfDay(now);
+      const todayEnd = endOfDay(now);
+
+      if (dueFilter === 'TODAY') {
+        query.dueDate = { $gte: todayStart, $lte: todayEnd };
+      }
+
+      if (dueFilter === 'OVERDUE') {
+        query.dueDate = { $lt: todayStart };
+        query.status = query.status || { $ne: 'DONE' };
+      }
+
+      if (dueFilter === 'UPCOMING') {
+        query.dueDate = { $gt: todayEnd };
+      }
     }
 
     if (req.query.search) {
@@ -308,14 +367,28 @@ exports.getStaffTasks = async (req, res) => {
     const tasks = await StaffTask.find(query)
       .sort({ dueDate: 1, createdAt: -1 })
       .populate('area', 'name location')
-      .populate('animal', 'name species status');
+      .populate('animal', 'name species status healthStatus');
 
-    const counts = await StaffTask.aggregate([
-      { $match: { assignedTo: staff._id } },
-      { $group: { _id: '$status', count: { $sum: 1 } } },
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+    const [statusCountsResult, totalAssigned, overdue, dueToday] = await Promise.all([
+      StaffTask.aggregate([
+        { $match: baseQuery },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      StaffTask.countDocuments(baseQuery),
+      StaffTask.countDocuments({
+        ...baseQuery,
+        status: { $ne: 'DONE' },
+        dueDate: { $lt: todayStart },
+      }),
+      StaffTask.countDocuments({
+        ...baseQuery,
+        dueDate: { $gte: todayStart, $lte: todayEnd },
+      }),
     ]);
 
-    const statusCounts = counts.reduce((result, item) => {
+    const statusCounts = statusCountsResult.reduce((result, item) => {
       result[item._id] = item.count;
       return result;
     }, {});
@@ -327,16 +400,161 @@ exports.getStaffTasks = async (req, res) => {
         name: staff.fullName || staff.email.split('@')[0],
       },
       summary: {
-        total: tasks.length,
+        total: totalAssigned,
+        filtered: tasks.length,
         todo: statusCounts.TODO || 0,
         inProgress: statusCounts.IN_PROGRESS || 0,
         done: statusCounts.DONE || 0,
+        overdue,
+        dueToday,
       },
       tasks: tasks.map(mapTask),
     });
   } catch (error) {
     console.error('Get staff tasks failed:', error);
     res.status(500).json({ message: 'Failed to load staff tasks' });
+  }
+};
+
+exports.getStaffSchedule = async (req, res) => {
+  try {
+    const staff = await getStaffFromRequest(req);
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff user not found' });
+    }
+
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    const tasks = await StaffTask.find({ assignedTo: staff._id })
+      .sort({ dueDate: 1, createdAt: -1 })
+      .populate('area', 'name location')
+      .populate('animal', 'name species status healthStatus');
+
+    const grouped = tasks.reduce((result, task) => {
+      const dueTime = new Date(task.dueDate).getTime();
+      let bucket = 'upcoming';
+
+      if (task.status === 'DONE') {
+        bucket = 'completed';
+      } else if (dueTime < todayStart.getTime()) {
+        bucket = 'overdue';
+      } else if (dueTime <= todayEnd.getTime()) {
+        bucket = 'today';
+      }
+
+      result[bucket].push(mapTask(task));
+      return result;
+    }, {
+      overdue: [],
+      today: [],
+      upcoming: [],
+      completed: [],
+    });
+
+    res.json({
+      schedule: grouped,
+      summary: {
+        overdue: grouped.overdue.length,
+        today: grouped.today.length,
+        upcoming: grouped.upcoming.length,
+        completed: grouped.completed.length,
+        total: tasks.length,
+      },
+    });
+  } catch (error) {
+    console.error('Get staff schedule failed:', error);
+    res.status(500).json({ message: error.message || 'Failed to load staff schedule' });
+  }
+};
+
+exports.getStaffCareLogs = async (req, res) => {
+  try {
+    const staff = await getStaffFromRequest(req);
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff user not found' });
+    }
+
+    const query = { staff: staff._id };
+
+    if (req.query.careType) {
+      const careType = String(req.query.careType).trim().toUpperCase();
+      if (['FEEDING', 'CLEANING', 'OBSERVATION', 'ENRICHMENT'].includes(careType)) {
+        query.careType = careType;
+      }
+    }
+
+    if (req.query.date) {
+      const date = new Date(req.query.date);
+      if (!Number.isNaN(date.getTime())) {
+        query.loggedAt = { $gte: startOfDay(date), $lte: endOfDay(date) };
+      }
+    }
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(escapeRegExp(req.query.search), 'i');
+      const animalIds = await Animal.distinct('_id', {
+        $or: [
+          { name: searchRegex },
+          { code: searchRegex },
+          { species: searchRegex },
+          { scientificName: searchRegex },
+        ],
+      });
+
+      const taskIds = await StaffTask.distinct('_id', {
+        assignedTo: staff._id,
+        $or: [
+          { title: searchRegex },
+          { description: searchRegex },
+          { taskType: searchRegex },
+        ],
+      });
+
+      query.$or = [
+        { notes: searchRegex },
+        { animal: { $in: animalIds } },
+        { task: { $in: taskIds } },
+      ];
+    }
+
+    const logs = await CareLog.find(query)
+      .sort({ loggedAt: -1 })
+      .limit(80)
+      .populate('staff', 'email fullName')
+      .populate('animal', 'name species')
+      .populate('task', 'title status');
+
+    const counts = await CareLog.aggregate([
+      { $match: { staff: staff._id } },
+      { $group: { _id: '$careType', count: { $sum: 1 } } },
+    ]);
+
+    const careTypeCounts = counts.reduce((result, item) => {
+      result[item._id] = item.count;
+      return result;
+    }, {});
+
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    res.json({
+      logs: logs.map(mapCareLog),
+      summary: {
+        total: await CareLog.countDocuments({ staff: staff._id }),
+        filtered: logs.length,
+        today: await CareLog.countDocuments({ staff: staff._id, loggedAt: { $gte: todayStart, $lte: todayEnd } }),
+        feeding: careTypeCounts.FEEDING || 0,
+        cleaning: careTypeCounts.CLEANING || 0,
+        observation: careTypeCounts.OBSERVATION || 0,
+        enrichment: careTypeCounts.ENRICHMENT || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Get staff care logs failed:', error);
+    res.status(500).json({ message: error.message || 'Failed to load staff care logs' });
   }
 };
 
@@ -350,7 +568,7 @@ exports.getStaffTaskById = async (req, res) => {
 
     const task = await StaffTask.findOne({ _id: req.params.id, assignedTo: staff._id })
       .populate('area', 'name location habitatType')
-      .populate('animal', 'name code species scientificName status')
+      .populate('animal', 'name code species scientificName status healthStatus')
       .populate('assignedBy', 'email fullName role');
 
     if (!task) {
@@ -376,7 +594,9 @@ exports.getStaffTaskById = async (req, res) => {
           name: task.animal.name,
           species: task.animal.species,
           scientificName: task.animal.scientificName,
-          status: task.animal.status,
+          status: healthStatusToCareStatus(task.animal.healthStatus),
+          healthStatus: task.animal.healthStatus,
+          operationalStatus: task.animal.status,
         } : null,
         area: task.area ? {
           id: task.area._id,
@@ -425,7 +645,7 @@ exports.updateStaffTaskStatus = async (req, res) => {
 
     const populatedTask = await StaffTask.findById(task._id)
       .populate('area', 'name location')
-      .populate('animal', 'name species status');
+      .populate('animal', 'name species status healthStatus');
 
     res.json({ task: mapTask(populatedTask) });
   } catch (error) {
@@ -446,7 +666,7 @@ exports.getStaffAnimals = async (req, res) => {
 
     if (req.query.status) {
       const parsedStatus = parseAnimalStatus(req.query.status);
-      if (parsedStatus) query.status = parsedStatus;
+      if (parsedStatus) query.healthStatus = parsedStatus;
     }
 
     if (req.query.search) {
@@ -482,9 +702,9 @@ exports.getStaffAnimals = async (req, res) => {
       })),
       summary: {
         total: animals.length,
-        healthy: animals.filter((animal) => animal.status === 'HEALTHY').length,
-        observation: animals.filter((animal) => animal.status === 'OBSERVATION').length,
-        treatment: animals.filter((animal) => animal.status === 'TREATMENT').length,
+        healthy: animals.filter((animal) => healthStatusToCareStatus(animal.healthStatus) === 'HEALTHY').length,
+        observation: animals.filter((animal) => healthStatusToCareStatus(animal.healthStatus) === 'OBSERVATION').length,
+        treatment: animals.filter((animal) => healthStatusToCareStatus(animal.healthStatus) === 'TREATMENT').length,
       },
     });
   } catch (error) {
@@ -679,14 +899,14 @@ exports.updateAnimalCareStatus = async (req, res) => {
       return res.status(404).json({ message: 'Animal not found' });
     }
 
-    animal.status = status;
+    animal.healthStatus = status;
     await animal.save();
 
     const log = await CareLog.create({
       animal: animal._id,
       staff: staff._id,
       careType: 'OBSERVATION',
-      notes: req.body.notes || `Care status updated to ${status}.`,
+      notes: req.body.notes || `Care status updated to ${healthStatusToCareStatus(status)}.`,
       loggedAt: new Date(),
     });
 
@@ -695,6 +915,6 @@ exports.updateAnimalCareStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Update animal care status failed:', error);
-    res.status(500).json({ message: 'Failed to update animal care status' });
+    res.status(500).json({ message: error.message || 'Failed to update animal care status' });
   }
 };

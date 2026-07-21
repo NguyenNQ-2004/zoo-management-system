@@ -13,9 +13,11 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import UserDashboard from '../pages/user/UserDashboard';
 import StaffAnimalsPage from '../pages/staff/StaffAnimalsPage';
 import StaffCareHistoryPage from '../pages/staff/StaffCareHistoryPage';
+import StaffCareLogsPage from '../pages/staff/StaffCareLogsPage';
 import StaffDashboard from '../pages/staff/StaffDashboard';
 import StaffCareDetail from '../pages/staff/StaffCareDetail';
 import StaffCareLogFormPage from '../pages/staff/StaffCareLogFormPage';
+import StaffSchedulePage from '../pages/staff/StaffSchedulePage';
 import StaffTaskDetailPage from '../pages/staff/StaffTaskDetailPage';
 import StaffTasksPage from '../pages/staff/StaffTasksPage';
 import VetDashboard from '../pages/veterinary/VetDashboard';
@@ -48,6 +50,11 @@ const AppRoutes = () => {
         {/* User Routes */}
         <Route path="/user" element={<RoleRoute allowedRole="USER"><UserLayout /></RoleRoute>}>
           <Route index element={<UserDashboard />} />
+          <Route path="explore" element={<UserDashboard />} />
+          <Route path="animals" element={<UserDashboard />} />
+          <Route path="services" element={<UserDashboard />} />
+          <Route path="tickets" element={<UserDashboard />} />
+          <Route path="profile" element={<UserDashboard />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="User" functions={[]} />} />
         </Route>
 
@@ -60,6 +67,8 @@ const AppRoutes = () => {
           <Route path="animals/:animalId/care-logs/new" element={<StaffCareLogFormPage />} />
           <Route path="tasks" element={<StaffTasksPage />} />
           <Route path="tasks/:taskId" element={<StaffTaskDetailPage />} />
+          <Route path="schedule" element={<StaffSchedulePage />} />
+          <Route path="care-logs" element={<StaffCareLogsPage />} />
           <Route path="*" element={<PlaceholderPage title="Under Construction" roleName="Staff" functions={[]} />} />
         </Route>
 
@@ -73,7 +82,8 @@ const AppRoutes = () => {
         <Route path="/admin" element={<RoleRoute allowedRole="ADMIN"><AdminLayout /></RoleRoute>}>
           <Route index element={<AdminDashboard />} />
           <Route path="areas" element={<AreaManagement />} />
-          <Route path="animals" element={<AnimalManagement />} />
+          <Route path="animals" element={<AdminAnimalsPage />} />
+          <Route path="legacy-animals" element={<AnimalManagement />} />
           <Route path="services" element={<ServiceManagement />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="staff" element={<AdminStaffPage />} />
